@@ -1,4 +1,3 @@
-# Group-5-AIDA-Project
 """
 
 A* grid planning !?
@@ -54,10 +53,10 @@ class AStarPlanner:
         A star path search
 
         input:
-            s_x: start x position [m]
-            s_y: start y position [m]
-            gx: goal x position [m]
-            gy: goal y position [m]
+            sx: 5.0 [m]
+            sy: 40.0 [m]
+            gx: 20.0 [m]
+            gy: 30.0 [m]
 
         output:
             rx: x position list of the final path
@@ -206,7 +205,7 @@ class AStarPlanner:
         # obstacle map generation
         self.obstacle_map = [[False for _ in range(self.y_width)]
                              for _ in range(self.x_width)]
-        for ix in range(self.x_width):
+        for i in range(self.x_width):
             x = self.calc_grid_position(ix, self.min_x)
             for iy in range(self.y_width):
                 y = self.calc_grid_position(iy, self.min_y)
@@ -244,21 +243,21 @@ def main():
 
     # set obstacle positions
     ox, oy = [], []
-    for i in range(-10, 60):
+    for i in range(-10, 61):
         ox.append(i)
         oy.append(-10.0)
-    for i in range(-10, 60):
-        ox.append(60.0)
-        oy.append(i)
     for i in range(-10, 61):
         ox.append(i)
         oy.append(60.0)
     for i in range(-10, 61):
         ox.append(-10.0)
         oy.append(i)
-    for i in range(-10, 40):
-        ox.append(20.0)
+    for i in range(-10, 61):
+        ox.append(60.0)
         oy.append(i)
+    for i in range(10, 51):
+        ox.append(i)
+        oy.append(45.0)
     for i in range(0, 40):
         ox.append(40.0)
         oy.append(60.0 - i)
