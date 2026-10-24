@@ -241,26 +241,38 @@ def main():
     grid_size = 2.0  # [m]
     robot_radius = 1.0  # [m]
 
-    # set obstacle positions
-    ox, oy = [], []
-    for i in range(-10, 61):
-        ox.append(i)
-        oy.append(-10.0)
-    for i in range(-10, 61):
-        ox.append(i)
-        oy.append(60.0)
-    for i in range(-10, 61):
-        ox.append(-10.0)
-        oy.append(i)
-    for i in range(-10, 61):
-        ox.append(60.0)
-        oy.append(i)
-    for i in range(10, 51):
-        ox.append(i)
-        oy.append(45.0)
-    for i in range(0, 40):
-        ox.append(40.0)
-        oy.append(60.0 - i)
+    # Set obstacle positions
+ox, oy = [], []
+
+# Boundary obstacles
+for i in range(-10, 61):
+    ox.append(i)
+    oy.append(-10.0)
+
+for i in range(-10, 61):
+    ox.append(i)
+    oy.append(60.0)
+
+for i in range(-10, 61):
+    ox.append(-10.0)
+    oy.append(i)
+
+for i in range(-10, 61):
+    ox.append(60.0)
+    oy.append(i)
+
+# Horizontal obstacle: (10,45) to (50,45)
+for i in range(10, 51):
+    ox.append(i)
+    oy.append(45.0)
+
+# Diagonal obstacle: (30,45) to (40,-5)
+for i in range(46):
+    x = 30.0 + (10.0 * i / 45.0)
+    y = 45.0 - (50.0 * i / 45.0)
+
+    ox.append(x)
+    oy.append(y)
 
     if show_animation:  # pragma: no cover
         plt.plot(ox, oy, ".k")
