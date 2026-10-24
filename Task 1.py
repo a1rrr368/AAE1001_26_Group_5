@@ -1,17 +1,14 @@
 """
-
-A* grid planning !?
-
-author: Atsushi Sakai(@Atsushi_twi)
-        Nikos Kanargias (nkana@tee.gr)
-
-See Wikipedia article (https://en.wikipedia.org/wiki/A*_search_algorithm)
-
+A* grid planning with Cost-Intensive Areas and Cost Calculation
 """
 
+import sys
 import math
-
 import matplotlib.pyplot as plt
+
+# Colab safeguard for __file__
+if '__file__' not in globals():
+    __file__ = 'a_star_note.py'
 
 show_animation = True
 
@@ -27,7 +24,6 @@ class AStarPlanner:
         resolution: grid resolution [m]
         rr: robot radius[m]
         """
-
         self.resolution = resolution
         self.rr = rr
         self.min_x, self.min_y = 0, 0
@@ -48,21 +44,24 @@ class AStarPlanner:
             return str(self.x) + "," + str(self.y) + "," + str(
                 self.cost) + "," + str(self.parent_index)
 
+    def calc_cost_multiplier(self, px, py):
+        """
+        Applies additional flight time penalties for cost-intensive areas:
+        - Red Zone: 30% additional flight time (multiplier = 1.30)
+        - Yellow Zone: 15% additional flight time (multiplier = 1.15)
+        """
+        # Red Zone boundaries (x: 10 to 20, y: 10 to 45)
+        if 10.0 <= px <= 20.0 and 10.0 <= py <= 45.0:
+            return 1.30
+        # Yellow Zone boundaries (x: 30 to 45, y: 0 to 35)
+        elif 30.0 <= px <= 45.0 and 0.0 <= py <= 35.0:
+            return 1.15
+        return 1.00
+
     def planning(self, sx, sy, gx, gy):
         """
         A star path search
-
-        input:
-            s_x: start x position [m]
-            s_y: start y position [m]
-            gx: goal x position [m]
-            gy: goal y position [m]
-
-        output:
-            rx: x position list of the final path
-            ry: y position list of the final path
         """
-
         start_node = self.Node(self.calc_xy_index(sx, self.min_x),
                                self.calc_xy_index(sy, self.min_y), 0.0, -1)
         goal_node = self.Node(self.calc_xy_index(gx, self.min_x),
@@ -79,18 +78,16 @@ class AStarPlanner:
             c_id = min(
                 open_set,
                 key=lambda o: open_set[o].cost + self.calc_heuristic(goal_node,
-                                                                     open_set[
-                                                                         o]))
+                                                                   open_set[o]))
             current = open_set[c_id]
 
             # show graph
             if show_animation:  # pragma: no cover
                 plt.plot(self.calc_grid_position(current.x, self.min_x),
                          self.calc_grid_position(current.y, self.min_y), "xc")
-                # for stopping simulation with the esc key.
                 plt.gcf().canvas.mpl_connect('key_release_event',
-                                             lambda event: [exit(
-                                                 0) if event.key == 'escape' else None])
+                                           lambda event: [exit(
+                                               0) if event.key == 'escape' else None])
                 if len(closed_set.keys()) % 10 == 0:
                     plt.pause(0.001)
 
@@ -106,11 +103,20 @@ class AStarPlanner:
             # Add it to the closed set
             closed_set[c_id] = current
 
-            # expand_grid search grid based on motion model
+            # expand_grid search grid based on motion model with cost-intensive multipliers
             for i, _ in enumerate(self.motion):
-                node = self.Node(current.x + self.motion[i][0],
-                                 current.y + self.motion[i][1],
-                                 current.cost + self.motion[i][2], c_id)
+                nx = current.x + self.motion[i][0]
+                ny = current.y + self.motion[i][1]
+
+                # Calculate actual coordinates to check zones
+                px = self.calc_grid_position(nx, self.min_x)
+                py = self.calc_grid_position(ny, self.min_y)
+
+                base_cost = self.motion[i][2]
+                multiplier = self.calc_cost_multiplier(px, py)
+                step_cost = base_cost * multiplier
+
+                node = self.Node(nx, ny, current.cost + step_cost, c_id)
                 n_id = self.calc_grid_index(node)
 
                 # If the node is not safe, do nothing
@@ -128,11 +134,9 @@ class AStarPlanner:
                         open_set[n_id] = node
 
         rx, ry = self.calc_final_path(goal_node, closed_set)
-
-        return rx, ry
+        return rx, ry, goal_node.cost
 
     def calc_final_path(self, goal_node, closed_set):
-        # generate final course
         rx, ry = [self.calc_grid_position(goal_node.x, self.min_x)], [
             self.calc_grid_position(goal_node.y, self.min_y)]
         parent_index = goal_node.parent_index
@@ -151,13 +155,6 @@ class AStarPlanner:
         return d
 
     def calc_grid_position(self, index, min_position):
-        """
-        calc grid position
-
-        :param index:
-        :param min_position:
-        :return:
-        """
         pos = index * self.resolution + min_position
         return pos
 
@@ -187,20 +184,13 @@ class AStarPlanner:
         return True
 
     def calc_obstacle_map(self, ox, oy):
-
         self.min_x = round(min(ox))
         self.min_y = round(min(oy))
         self.max_x = round(max(ox))
         self.max_y = round(max(oy))
-        print("min_x:", self.min_x)
-        print("min_y:", self.min_y)
-        print("max_x:", self.max_x)
-        print("max_y:", self.max_y)
 
         self.x_width = round((self.max_x - self.min_x) / self.resolution)
         self.y_width = round((self.max_y - self.min_y) / self.resolution)
-        print("x_width:", self.x_width)
-        print("y_width:", self.y_width)
 
         # obstacle map generation
         self.obstacle_map = [[False for _ in range(self.y_width)]
@@ -226,7 +216,6 @@ class AStarPlanner:
                   [-1, 1, math.sqrt(2)],
                   [1, -1, math.sqrt(2)],
                   [1, 1, math.sqrt(2)]]
-
         return motion
 
 
@@ -234,7 +223,7 @@ def main():
     print(__file__ + " start!!")
 
     # start and goal position
-    sx = 5.0  # [m]
+    sx = 5.0   # [m]
     sy = 40.0  # [m]
     gx = 20.0  # [m]
     gy = 30.0  # [m]
@@ -262,13 +251,15 @@ def main():
     for i in range(-10, 61):
         ox.append(60.0)
         oy.append(i)
-    def add_line(x0,y0,x1,y1,n=100):
-        for i in range(n+1):
+
+    def add_line(x0, y0, x1, y1, n=100):
+        for i in range(n + 1):
             t = i / n
-            x = x0 + t*(x1-x0)
-            y = y0 + t*(y1-y0)
+            x = x0 + t * (x1 - x0)
+            y = y0 + t * (y1 - y0)
             ox.append(x)
             oy.append(y)
+
     add_line(30, 45, 40, 0, n=100)
 
     if show_animation:  # pragma: no cover
@@ -279,12 +270,26 @@ def main():
         plt.axis("equal")
 
     a_star = AStarPlanner(ox, oy, grid_size, robot_radius)
-    rx, ry = a_star.planning(sx, sy, gx, gy)
+    rx, ry, T_best = a_star.planning(sx, sy, gx, gy)
 
     if show_animation:  # pragma: no cover
         plt.plot(rx, ry, "-r")
         plt.pause(0.001)
         plt.show()
+
+    # Print T_best and calculate Total Trip Cost (C)
+    print(f"\n--- Task 1 Results ---")
+    print(f"T_best (Fastest Path Time): {T_best:.2f} minutes")
+
+    # Example calculation for A321neo with Low time cost, Fuel cost = 0.8 $/kg
+    fuel_consumption_rate = 54  # kg/min (A321neo)
+    delta_F = fuel_consumption_rate * T_best  # Trip fuel
+    C_F = 0.8   # Fuel cost per kg
+    C_T = 10    # Time cost (Low) for A321neo ($/min)
+    Cc = 1800   # Fixed cost for A321neo ($)
+
+    total_cost = (C_F * delta_F) + (C_T * T_best) + Cc
+    print(f"Total Trip Cost (C): ${total_cost:.2f}")
 
 
 if __name__ == '__main__':
