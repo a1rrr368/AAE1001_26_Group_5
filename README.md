@@ -290,5 +290,5 @@ for i in range(46):
         plt.show()
 
 
-if __name__ == '__main__':
+if name == '__main__':
     main()
