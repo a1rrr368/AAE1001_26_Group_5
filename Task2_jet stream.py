@@ -1,6 +1,6 @@
 """
-AAE1001 - Group 5 - Task 1
-Full fixed version (Matplotlib 3.10+ compatible)
+AAE1001 - Group 5 - Task 1 & Task 2
+Full fixed version (Matplotlib 3.10+ compatible) with Jet Stream integration
 """
 
 import math
@@ -11,11 +11,14 @@ from matplotlib import MatplotlibDeprecationWarning
 # Suppress the deprecation warnings
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 
-show_animation = False   # set to False if you only want numbers
-# Task 2: horizontal jet stream across the map
+show_animation = True    # set to True to see the plot with the jet stream
+
+# ============================================================
+# Task 2: Jet Stream Parameters (You can change JET_STREAM_Y_MIN here)
+# ============================================================
 JET_STREAM_Y_MIN = 5.0
 JET_STREAM_HEIGHT = 5.0
-JET_STREAM_FACTOR = 0.95
+JET_STREAM_FACTOR = 0.95  # 5% cost reduction
 
 class AStarPlanner:
 
@@ -64,7 +67,6 @@ class AStarPlanner:
                        self.calc_heuristic(goal_node, open_set[o]))
             current = open_set[c_id]
 
-            # Fixed plotting (no float deprecation warning)
             if show_animation:
                 x_pos = int(round(self.calc_grid_position(current.x, self.min_x)))
                 y_pos = int(round(self.calc_grid_position(current.y, self.min_y)))
@@ -100,6 +102,10 @@ class AStarPlanner:
                 # Fuel-consuming area (yellow) +15%
                 if px in self.fc_x and py in self.fc_y:
                     node.cost += self.Delta_FC * self.motion[i][2]
+
+                # Task 2: Jet stream area (-5% cost reduction)
+                if JET_STREAM_Y_MIN <= py <= (JET_STREAM_Y_MIN + JET_STREAM_HEIGHT):
+                    node.cost -= (1.0 - JET_STREAM_FACTOR) * self.motion[i][2] * self.costPerGrid
 
                 n_id = self.calc_grid_index(node)
 
@@ -174,7 +180,7 @@ class AStarPlanner:
 
 def main():
     print("=" * 60)
-    print("AAE1001 – Group 5 – Task 1")
+    print("AAE1001 – Group 5 – Task 1 & Task 2 (Jet Stream)")
     print("=" * 60)
 
     # Start & Goal (Group 5)
@@ -228,17 +234,25 @@ def main():
             tc_x.append(i)
             tc_y.append(j)
 
+    # ---------- Jet stream area (blue shading) ----------
+    js_x, js_y = [], []
+    for i in range(-10, 61):
+        for j in range(int(JET_STREAM_Y_MIN), int(JET_STREAM_Y_MIN + JET_STREAM_HEIGHT) + 1):
+            js_x.append(i)
+            js_y.append(float(j))
+
     # ---------- Plot setup ----------
     if show_animation:
         plt.figure(figsize=(10, 8))
         plt.plot(ox, oy, ".k", markersize=2, label="Obstacles")
         plt.plot(fc_x, fc_y, "oy", markersize=3, alpha=0.4, label="Fuel-consuming (+15%)")
         plt.plot(tc_x, tc_y, "or", markersize=3, alpha=0.4, label="Time-consuming (+30%)")
+        plt.plot(js_x, js_y, "sb", markersize=3, alpha=0.2, label=f"Jet Stream y:[{int(JET_STREAM_Y_MIN)}, {int(JET_STREAM_Y_MIN + JET_STREAM_HEIGHT)}] (-5%)")
         plt.plot(sx, sy, "b*", markersize=15, label="Start")
         plt.plot(gx, gy, "g*", markersize=15, label="Goal")
         plt.grid(True)
         plt.axis("equal")
-        plt.title("Group 5 – Path Planning")
+        plt.title("Group 5 – Path Planning with Jet Stream (Task 2)")
         plt.legend(loc="upper right")
 
     # ---------- Run A* ----------
