@@ -212,7 +212,7 @@ def main():
 
     # ---------- Fuel-consuming area (yellow) ----------
     fc_x, fc_y = [], []
-    for i in range(-5, 31):
+    for i in range(-10, 31):
         for j in range(0, 11):
             fc_x.append(i)
             fc_y.append(j)
