@@ -18,7 +18,7 @@ show_animation = True    # set to True to see the plot with the jet stream
 # ============================================================
 JET_STREAM_Y_MIN = 5.0
 JET_STREAM_HEIGHT = 5.0
-JET_STREAM_FACTOR = 0.95  # 5% cost reduction[cite: 1]
+JET_STREAM_FACTOR = 0.95  # 5% cost reduction
 
 class AStarPlanner:
 
@@ -103,7 +103,7 @@ class AStarPlanner:
                 if px in self.fc_x and py in self.fc_y:
                     node.cost += self.Delta_FC * self.motion[i][2]
 
-                # Task 2: Jet stream area (-5% cost reduction)[cite: 1]
+                # Task 2: Jet stream area (-5% cost reduction)
                 if JET_STREAM_Y_MIN <= py <= (JET_STREAM_Y_MIN + JET_STREAM_HEIGHT):
                     node.cost -= (1.0 - JET_STREAM_FACTOR) * self.motion[i][2] * self.costPerGrid
 
@@ -247,7 +247,7 @@ def main():
         plt.plot(ox, oy, ".k", markersize=2, label="Obstacles")
         plt.plot(fc_x, fc_y, "oy", markersize=3, alpha=0.4, label="Fuel-consuming (+15%)")
         plt.plot(tc_x, tc_y, "or", markersize=3, alpha=0.4, label="Time-consuming (+30%)")
-        plt.plot(js_x, js_y, "sb", markersize=3, alpha=0.2, label=f"Jet Stream y:[{int(JET_STREAM_Y_MIN)}, {int(JET_STREAM_Y_MIN + JET_STREAM_HEIGHT)}] (-5%)")[cite: 1]
+        plt.plot(js_x, js_y, "sb", markersize=3, alpha=0.2, label=f"Jet Stream y:[{int(JET_STREAM_Y_MIN)}, {int(JET_STREAM_Y_MIN + JET_STREAM_HEIGHT)}] (-5%)")
         plt.plot(sx, sy, "b*", markersize=15, label="Start")
         plt.plot(gx, gy, "g*", markersize=15, label="Goal")
         plt.grid(True)
