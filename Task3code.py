@@ -1,0 +1,62 @@
+# C = C(f) . dF . T(best) .  + C(t) . T(best) + C(c)
+# where C(f) is cost of fuel per kg, dF is the trip fuel, C(t) is the time related cost per minute of flight, C(c) is the fixed cost indepedent of time
+## constant term: T(best) = 58.7875 minutes
+## Based on scenario 1
+## C(f) = 0.85 $/kg
+
+Tb = 58.7875
+Cf = 0.85
+
+def calculate_CT(x):
+    # Constant 
+    Ct = 12
+
+    ####
+
+    temp = x // 50
+    final = Ct + (temp * 2)
+    return final
+
+def decide_engine(x):
+    if x >= 300:
+        return 2500
+    else:
+        return 2000
+
+def calculate_fuel(x):
+    # first check if dual or quad engine 
+
+    checker = False
+
+    if x >= 300:
+        checker = True
+    else:
+        pass
+
+    # calculate fuel load based on best time cost
+
+    pe = 20 #each engine consumes fuel at 20kg/min
+    fuel = 0
+
+    if checker:
+        fuel = (4*pe) * Tb
+    else:
+        fuel = (2*pe) * Tb
+
+    return fuel
+
+def main():
+    #get input
+    p = int(input("Enter the passenger capacity: "))
+    fuel = calculate_fuel(p)
+    Ct = calculate_CT(p)
+    Cc = decide_engine(p)
+
+    #calculate total cost
+
+    total_cost = (Cf * fuel * Tb) + (Ct * Tb) + Cc
+    print(total_cost)
+
+while(True):
+    main()
+
