@@ -1,3 +1,4 @@
+import math
 # C = C(f) . dF . T(best) .  + C(t) . T(best) + C(c)
 # where C(f) is cost of fuel per kg, dF is the trip fuel, C(t) is the time related cost per minute of flight, C(c) is the fixed cost indepedent of time
 ## constant term: T(best) = 58.7875 minutes
@@ -13,7 +14,7 @@ def calculate_CT(x):
 
     ####
 
-    temp = x // 50
+    temp = (x - 100) // 50
     final = Ct + (temp * 2)
     return final
 
@@ -48,14 +49,31 @@ def calculate_fuel(x):
 def main():
     #get input
     p = int(input("Enter the passenger capacity: "))
+    flights = math.ceil(3300 / p)
+    if p not in range(100, 451, 50):
+        print("Capacity must be 100 to 450, in steps of 50.")
+        return
+    print("Flights needed:", flights)
+    if flights > 13:
+        print("Not feasible: more than 13 flights needed.")
+        return
     fuel = calculate_fuel(p)
     Ct = calculate_CT(p)
     Cc = decide_engine(p)
 
     #calculate total cost
 
-    total_cost = (Cf * fuel * Tb) + (Ct * Tb) + Cc
-    print(total_cost)
+    cost_per_flight = (Cf * fuel) + (Ct * Tb) + Cc
+    total_cost = cost_per_flight * flights
+    engines = 4 if p >= 300 else 2
+
+    print("Engine count:", engines)
+    print(f"Fuel cost per flight: ${Cf * fuel:.2f}")
+    print(f"Time cost per flight: ${Ct * Tb:.2f}")
+    print(f"Fixed cost per flight: ${Cc:.2f}")
+
+    print(f"Cost per flight: ${cost_per_flight:.2f}")
+    print(f"Total cost: ${total_cost:.2f}")
 
 while(True):
     main()
