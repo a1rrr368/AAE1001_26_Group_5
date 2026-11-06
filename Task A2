@@ -1,0 +1,285 @@
+"""
+AAE1001 - Week 9 Additional Task A2: Changing Environment
+(optional bonus)
+
+Requirements implemented:
+1. Only one fuel-consuming (cost-intensive) area remains,
+   randomly generated with fixed size 40 x 40.
+2. Diagonal movement disabled; object travels only in the
+   four cardinal directions (one grid size).
+3. Obstacles generated randomly with reasonable density.
+4. Destination and starting points are generated randomly with
+   at least a 40-unit distance in-between.
+5. Plotting of the fuel-consuming area would not cover the obstacles,
+   and obstacles should not generate at/near the start and end point.
+"""
+
+import math
+import random
+import warnings
+import matplotlib
+import matplotlib.pyplot as plt
+
+# Suppress Matplotlib deprecation / limit warnings
+warnings.filterwarnings("ignore", category=matplotlib.MatplotlibDeprecationWarning)
+warnings.filterwarnings("ignore", message="Ignoring fixed x limits")
+
+show_animation = True
+
+
+class AStarPlanner:
+    def __init__(self, ox, oy, resolution, rr, fuel_x, fuel_y):
+        self.resolution = resolution
+        self.rr = rr
+        self.min_x = self.min_y = 0
+        self.max_x = self.max_y = 0
+        self.obstacle_map = None
+        self.x_width = self.y_width = 0
+        self.motion = self.get_motion_model()
+        self.calc_obstacle_map(ox, oy)
+
+        self.fuel_x = fuel_x
+        self.fuel_y = fuel_y
+
+        self.Delta_Fuel = 0.5
+        self.costPerGrid = 1.0
+
+    class Node:
+        def __init__(self, x, y, cost, parent_index):
+            self.x = x
+            self.y = y
+            self.cost = cost
+            self.parent_index = parent_index
+
+        def __str__(self):
+            return f"{self.x},{self.y},{self.cost},{self.parent_index}"
+
+    def planning(self, sx, sy, gx, gy):
+        start_node = self.Node(
+            self.calc_xy_index(sx, self.min_x),
+            self.calc_xy_index(sy, self.min_y),
+            0.0, -1)
+        goal_node = self.Node(
+            self.calc_xy_index(gx, self.min_x),
+            self.calc_xy_index(gy, self.min_y),
+            0.0, -1)
+
+        open_set, closed_set = dict(), dict()
+        open_set[self.calc_grid_index(start_node)] = start_node
+
+        while True:
+            if len(open_set) == 0:
+                print("Open set is empty – no path found.")
+                break
+
+            c_id = min(
+                open_set,
+                key=lambda o: open_set[o].cost +
+                self.calc_heuristic(goal_node, open_set[o]))
+            current = open_set[c_id]
+
+            if show_animation:
+                plt.plot(self.calc_grid_position(current.x, self.min_x),
+                         self.calc_grid_position(current.y, self.min_y), "xc")
+                plt.gcf().canvas.mpl_connect(
+                    'key_release_event',
+                    lambda event: [exit(0) if event.key == 'escape' else None])
+                if len(closed_set) % 20 == 0:
+                    plt.pause(0.001)
+
+            if current.x == goal_node.x and current.y == goal_node.y:
+                print(f"Goal reached. Total trip cost -> {current.cost:.2f}")
+                goal_node.parent_index = current.parent_index
+                goal_node.cost = current.cost
+                break
+
+            del open_set[c_id]
+            closed_set[c_id] = current
+
+            for i, _ in enumerate(self.motion):
+                node = self.Node(
+                    current.x + self.motion[i][0],
+                    current.y + self.motion[i][1],
+                    current.cost + self.motion[i][2] * self.costPerGrid,
+                    c_id)
+
+                px = self.calc_grid_position(node.x, self.min_x)
+                py = self.calc_grid_position(node.y, self.min_y)
+                if px in self.fuel_x and py in self.fuel_y:
+                    node.cost += self.Delta_Fuel * self.motion[i][2]
+
+                n_id = self.calc_grid_index(node)
+
+                if not self.verify_node(node):
+                    continue
+                if n_id in closed_set:
+                    continue
+                if n_id not in open_set:
+                    open_set[n_id] = node
+                elif open_set[n_id].cost > node.cost:
+                    open_set[n_id] = node
+
+        rx, ry = self.calc_final_path(goal_node, closed_set)
+        return rx, ry
+
+    def calc_final_path(self, goal_node, closed_set):
+        rx = [self.calc_grid_position(goal_node.x, self.min_x)]
+        ry = [self.calc_grid_position(goal_node.y, self.min_y)]
+        parent_index = goal_node.parent_index
+        while parent_index != -1:
+            n = closed_set[parent_index]
+            rx.append(self.calc_grid_position(n.x, self.min_x))
+            ry.append(self.calc_grid_position(n.y, self.min_y))
+            parent_index = n.parent_index
+        return rx, ry
+
+    def calc_heuristic(self, n1, n2):
+        w = 1.0
+        d = w * (abs(n1.x - n2.x) + abs(n1.y - n2.y))
+        return d * self.costPerGrid
+
+    def calc_grid_position(self, index, min_position):
+        return index * self.resolution + min_position
+
+    def calc_xy_index(self, position, min_pos):
+        return round((position - min_pos) / self.resolution)
+
+    def calc_grid_index(self, node):
+        return (node.y - self.min_y) * self.x_width + (node.x - self.min_x)
+
+    def verify_node(self, node):
+        px = self.calc_grid_position(node.x, self.min_x)
+        py = self.calc_grid_position(node.y, self.min_y)
+        if (px < self.min_x or py < self.min_y or
+                px >= self.max_x or py >= self.max_y):
+            return False
+        if self.obstacle_map[node.x][node.y]:
+            return False
+        return True
+
+    def calc_obstacle_map(self, ox, oy):
+        self.min_x = round(min(ox))
+        self.min_y = round(min(oy))
+        self.max_x = round(max(ox))
+        self.max_y = round(max(oy))
+        print(f"min_x: {self.min_x}, min_y: {self.min_y}")
+        print(f"max_x: {self.max_x}, max_y: {self.max_y}")
+
+        self.x_width = round((self.max_x - self.min_x) / self.resolution)
+        self.y_width = round((self.max_y - self.min_y) / self.resolution)
+        print(f"x_width: {self.x_width}, y_width: {self.y_width}")
+
+        self.obstacle_map = [[False for _ in range(self.y_width)]
+                             for _ in range(self.x_width)]
+        for ix in range(self.x_width):
+            x = self.calc_grid_position(ix, self.min_x)
+            for iy in range(self.y_width):
+                y = self.calc_grid_position(iy, self.min_y)
+                for iox, ioy in zip(ox, oy):
+                    if math.hypot(iox - x, ioy - y) <= self.rr:
+                        self.obstacle_map[ix][iy] = True
+                        break
+
+    @staticmethod
+    def get_motion_model():
+        # Only 4 cardinal directions (diagonal movement disabled)
+        motion = [[1,  0, 1],
+                  [0,  1, 1],
+                  [-1, 0, 1],
+                  [0, -1, 1]]
+        return motion
+
+
+def generate_random_environment(map_min=-10, map_max=60,
+                                fuel_size=40, min_start_goal_dist=40,
+                                obstacle_density=0.08, clearance=3):
+    ox, oy = [], []
+    for i in range(map_min, map_max + 1):
+        ox.extend([i, i, map_min, map_max])
+        oy.extend([map_min, map_max, i, i])
+
+    while True:
+        sx = random.uniform(map_min + 5, map_max - 5)
+        sy = random.uniform(map_min + 5, map_max - 5)
+        gx = random.uniform(map_min + 5, map_max - 5)
+        gy = random.uniform(map_min + 5, map_max - 5)
+        if math.hypot(sx - gx, sy - gy) >= min_start_goal_dist:
+            break
+
+    fx0 = random.randint(map_min + 2, map_max - fuel_size - 2)
+    fy0 = random.randint(map_min + 2, map_max - fuel_size - 2)
+    fuel_x, fuel_y = [], []
+    for i in range(fx0, fx0 + fuel_size):
+        for j in range(fy0, fy0 + fuel_size):
+            fuel_x.append(i)
+            fuel_y.append(j)
+
+    area = (map_max - map_min) ** 2
+    n_obs = int(area * obstacle_density)
+
+    for _ in range(n_obs):
+        ox_cand = random.uniform(map_min + 1, map_max - 1)
+        oy_cand = random.uniform(map_min + 1, map_max - 1)
+
+        if (math.hypot(ox_cand - sx, oy_cand - sy) < clearance or
+                math.hypot(ox_cand - gx, oy_cand - gy) < clearance):
+            continue
+
+        ox.append(ox_cand)
+        oy.append(oy_cand)
+
+    return ox, oy, fuel_x, fuel_y, sx, sy, gx, gy
+
+
+def main():
+    try:
+        print(__file__ + "  –  Task A2: Changing Environment")
+    except NameError:
+        print("Task A2: Changing Environment")
+
+    map_min, map_max = -10, 60
+    grid_size = 1.0
+    robot_radius = 1.0
+
+    ox, oy, fuel_x, fuel_y, sx, sy, gx, gy = generate_random_environment(
+        map_min=map_min,
+        map_max=map_max,
+        fuel_size=40,
+        min_start_goal_dist=40,
+        obstacle_density=0.07,
+        clearance=4
+    )
+
+    print(f"Start : ({sx:.1f}, {sy:.1f})")
+    print(f"Goal  : ({gx:.1f}, {gy:.1f})")
+    print(f"Distance start-goal: {math.hypot(sx-gx, sy-gy):.1f}")
+
+    if show_animation:
+        plt.plot(ox, oy, ".k", markersize=2, label="Obstacles")
+        plt.plot(fuel_x, fuel_y, "s", color="cyan", alpha=0.35,
+                 markersize=3, label="Fuel-consuming area (40×40)")
+        plt.plot(sx, sy, "og", markersize=10, label="Start")
+        plt.plot(gx, gy, "xb", markersize=10, label="Goal")
+
+        plt.grid(True)
+        plt.axis("equal")          # keep this
+        # removed the two lines that caused the warning:
+        # plt.xlim(...)
+        # plt.ylim(...)
+        plt.title("Task A2 – Changing Environment\n"
+                  "(random fuel area 40×40, 4-dir only, random obstacles)")
+        plt.legend(loc="upper right")
+
+    a_star = AStarPlanner(ox, oy, grid_size, robot_radius, fuel_x, fuel_y)
+    rx, ry = a_star.planning(sx, sy, gx, gy)
+
+    if show_animation:
+        if rx and ry:
+            plt.plot(rx, ry, "-r", linewidth=2, label="Planned path")
+            plt.legend(loc="upper right")
+        plt.pause(0.001)
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()
