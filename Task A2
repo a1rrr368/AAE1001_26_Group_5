@@ -246,7 +246,7 @@ def main():
         map_max=map_max,
         fuel_size=40,
         min_start_goal_dist=40,
-        obstacle_density=0.07,
+        obstacle_density=0.15,
         clearance=4
     )
 
