@@ -1,6 +1,7 @@
 """
-AAE1001 - Group 5 - Task 1
-Full fixed version (Matplotlib 3.10+ compatible)
+AAE1001 - Group 5 - Task A3.2: RRT*
+Output-preserving maintenance (Matplotlib 3.10+ compatible).
+Review notes: REVIEW CHANGES.md. Printed headings are retained for compatibility.
 """
 
 import math
@@ -9,10 +10,10 @@ import matplotlib.pyplot as plt
 import warnings
 from matplotlib import MatplotlibDeprecationWarning
 
-# Suppress the deprecation warnings
+# REVIEW NOTES: Suppress only Matplotlib deprecation warnings, not runtime errors.
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 
-show_animation = True   # set to False if you only want numbers
+show_animation = True   # False skips plotting; route and cost calculations still run.
 
 class RRTStarPlanner:
 
@@ -30,13 +31,25 @@ class RRTStarPlanner:
         self.fc_y = fc_y
         self.tc_x = tc_x
         self.tc_y = tc_y
+
+        # REVIEW 1: Cache membership lookups; keep original lists for compatibility.
+        # Independent x/y membership preserves the original rectangular-area rule.
+        # Regions are static here; rebuild these caches if their lists are changed.
+        self._fc_x = frozenset(fc_x)
+        self._fc_y = frozenset(fc_y)
+        self._tc_x = frozenset(tc_x)
+        self._tc_y = frozenset(tc_y)
         self.step_size = step_size / resolution
         self.max_iter = max_iter
         self.goal_sample_rate = goal_sample_rate
+        # REVIEW 3: Keep the local seed and sampling order unchanged for reproducibility.
+        # A new planner repeats the seed; repeated planning() calls advance this RNG.
         self.rng = random.Random(seed)
 
-        self.Delta_TC = 0.30   # +30 % time-consuming area (pink)
-        self.Delta_FC = 0.15   # +15 % fuel-consuming area (yellow)
+        # REVIEW NOTES: Both regions add to weighted travel time in this model.
+        # These are not separate fuel-only charges; overlapping penalties add.
+        self.Delta_TC = 0.30   # Pink region: +30% of base movement cost.
+        self.Delta_FC = 0.15   # Yellow region: +15% of base movement cost.
         self.costPerGrid = 1.0
 
     class Node:
@@ -55,6 +68,8 @@ class RRTStarPlanner:
             print("Start or goal is occupied – no path found")
             return [], [], None
 
+        # REVIEW 2: Reuse the map-size factor; preserve operation order and rounding.
+        radius_factor = 2.0 * math.sqrt(self.x_width * self.y_width / math.pi)
         nodes = [start]
         children = [[]]
         goal_index = None
@@ -86,8 +101,7 @@ class RRTStarPlanner:
 
             radius = min(
                 self.step_size,
-                2.0 * math.sqrt(self.x_width * self.y_width / math.pi)
-                * math.sqrt(math.log(len(nodes) + 1) / (len(nodes) + 1)),
+                radius_factor * math.sqrt(math.log(len(nodes) + 1) / (len(nodes) + 1)),
             )
             near_indices = [
                 i for i, node in enumerate(nodes)
@@ -176,6 +190,7 @@ class RRTStarPlanner:
                 child.cost = parent.cost + self.segment_cost(parent, child)
                 pending.append(child_index)
 
+    # REVIEW NOTES: Return goal-to-start coordinates; the existing plot accepts this order.
     def calc_final_path(self, nodes, goal_index):
         rx, ry = [], []
         current_index = goal_index
@@ -196,6 +211,8 @@ class RRTStarPlanner:
             return False
         return not self.obstacle_map[ix][iy]
 
+    # REVIEW NOTES: Collision checking samples at spacing <=0.5 grid units and
+    # rounds each sample to an occupancy cell; it is not exact continuous geometry.
     def is_collision_free(self, start, end):
         distance = self.distance(start, end)
         steps = max(1, math.ceil(distance / 0.5))
@@ -207,6 +224,8 @@ class RRTStarPlanner:
                 return False
         return True
 
+    # REVIEW NOTES: Accumulate midpoint-sampled Euclidean segment costs.
+    # This differs from Dijkstra destination-cell penalties; keep native costs distinct.
     def segment_cost(self, start, end):
         distance = self.distance(start, end)
         steps = max(1, math.ceil(distance / 0.5))
@@ -221,9 +240,9 @@ class RRTStarPlanner:
                 start.y + (end.y - start.y) * ratio, self.min_y
             )
             penalty = self.costPerGrid
-            if round(x) in self.tc_x and round(y) in self.tc_y:
+            if round(x) in self._tc_x and round(y) in self._tc_y:
                 penalty += self.Delta_TC
-            if round(x) in self.fc_x and round(y) in self.fc_y:
+            if round(x) in self._fc_x and round(y) in self._fc_y:
                 penalty += self.Delta_FC
             total_cost += step_distance * penalty
         return total_cost
@@ -259,7 +278,7 @@ def main():
     print("AAE1001 – Group 5 – Task 1")
     print("=" * 60)
 
-    # Start & Goal (Group 5)
+    # Start & Goal (Group 5): keep this map/endpoints shared across planner comparisons.
     sx, sy = 5.0, 40.0
     gx, gy = 20.0, 30.0
     grid_size = 1.0
@@ -324,6 +343,9 @@ def main():
         plt.legend(loc="upper right")
 
     # ---------- Run RRT* ----------
+    # Defaults: seed=0, 5000 iterations, step_size=3.0, goal_sample_rate=0.1.
+    # Finite iterations do not guarantee a global optimum; the existing printed
+    # headings and "Optimal path" legend are retained for output compatibility.
     planner = RRTStarPlanner(ox, oy, grid_size, robot_radius, fc_x, fc_y, tc_x, tc_y)
     rx, ry, T_best = planner.planning(sx, sy, gx, gy)
 
@@ -337,7 +359,11 @@ def main():
         plt.show()
 
     # ============================================================
-    # Cost calculation for the three scenarios
+    # Cost calculation for the three Task 1 scenarios (retained in the A3 comparison).
+    # REVIEW NOTES: Per flight = Cf * rate * T_best + Ct * T_best + Cc.
+    # rate is kg/min; rate * T_best is fuel mass, so do not multiply by time twice.
+    # Multiply the unrounded per-flight cost by ceil(passengers / capacity).
+    # The same weighted T_best is used for fuel and time, even with empty seats.
     # ============================================================
     print("\n" + "=" * 60)
     print(f"T_best used for all scenarios = {T_best:.4f} minutes")
@@ -386,3 +412,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
