@@ -260,9 +260,15 @@ For Task A1, I wrote the planner to generate one checkpoint in each cost region 
 </details>
 
 <details>
-<summary><strong>Member 2</strong></summary>
+<summary><strong>Romeo</strong></summary>
 
-<!-- 把 Member 2 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+<!-- UPDATE ROMEO: personal contribution and reflection based on the member’s account. -->
+
+I contributed to Task 3 by checking the minimum feasible passenger capacity and editing the introduction to our aircraft, Doeing 7700. The scenario required us to transport 3,300 passengers within a maximum of 13 flights. Dividing 3,300 by 13 gives approximately 254 passengers per flight. Since the permitted capacities increase in steps of 50, 300 seats was the smallest feasible option. A 250-seat aircraft would require 14 flights and therefore exceed the limit. This check helped the team focus its cost comparisons on the 300-, 350-, 400- and 450-seat designs.
+
+Identifying this minimum capacity also established the engine configuration. Under the assignment rules, aircraft with at least 300 seats must use four engines. Therefore, every feasible design required four engines, which determined the fuel consumption rate and fixed cost used in our comparisons. Editing the Doeing 7700 introduction helped me practise explaining these connected decisions clearly.
+
+Through this assignment, I learned to check constraints before comparing costs. I initially focused on individual aircraft characteristics, but I came to understand that capacity, flight frequency and operating costs must be considered together. I also found that a small calculation could provide useful direction for the whole team. The project strengthened my confidence in explaining numerical reasoning and showed me the value of sharing assumptions early. In future group work, I would document these checks at the beginning so that everyone can build on the same understanding.
 
 </details>
 
