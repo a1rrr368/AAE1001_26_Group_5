@@ -1,580 +1,215 @@
-import math
-import heapq
-import matplotlib.pyplot as plt
+<h1 align="center">AAE1001 Group 5 Project</h1>
+<p align="center">Aircraft Route Planning and Operating Costs · 2026/27 Semester 1</p>
 
+## Project Overview
 
-show_animation = True
+<!-- 这里是首页简介。每题用一句话，让读者快速看懂项目范围。 -->
 
+Group 5 studies aircraft routing and operating costs through six tasks.
 
-class AStarPlanner:
+- **Task 1** finds the fastest route with A* and compares aircraft costs across three scenarios.
+- **Task 2** investigates where to place a jet stream to reduce operating costs.
+- **Task 3** compares aircraft capacities and engine requirements for Scenario 1.
+- **Task A1** plans a route through two supply checkpoints.
+- **Task A2** plans a route in a randomly generated environment.
+- **Task A3** compares A*, Dijkstra, and RRT*.
 
-    def __init__(self, ox, oy, resolution, rr):
-        self.resolution = resolution
-        self.rr = rr
-        self.min_x = -10
-        self.max_x = 60
-        self.min_y = -10
-        self.max_y = 60
+<details open>
+<summary><strong>Table of Contents</strong></summary>
 
-        self.obstacles = set(zip(ox, oy))
+1. [Project Overview](#project-overview)
+2. [Task 1](#task-1)
+3. [Task 2](#task-2)
+4. [Task 3](#task-3)
+5. [Task A1](#task-a1)
+6. [Task A2](#task-a2)
+7. [Task A3](#task-a3)
+8. [How to Run](#how-to-run)
+9. [Team Members and Contributions](#team-members-and-contributions)
+10. [References](#references)
+11. [Individual Reflections](#individual-reflections)
 
-        self.motion = [
-            (1, 0, 1.0),
-            (0, 1, 1.0),
-            (-1, 0, 1.0),
-            (0, -1, 1.0),
-            (1, 1, math.sqrt(2)),
-            (1, -1, math.sqrt(2)),
-            (-1, 1, math.sqrt(2)),
-            (-1, -1, math.sqrt(2))
-        ]
+</details>
 
-    def planning(self, sx, sy, gx, gy):
+<!-- 目录链接与下方标题对应。若改标题，记得同步修改目录中的 # 跳转链接。 -->
 
-        start = (round(sx), round(sy))
-        goal = (round(gx), round(gy))
+## Task 1
 
-        open_set = []
-        heapq.heappush(
-            open_set,
-            (0.0, start)
-        )
+### A* Route Planning and Aircraft Selection
 
-        g_cost = {start: 0.0}
-        parent = {}
-        closed_set = set()
+A* searches an eight-direction grid from (5, 40) to (20, 30). The route avoids obstacles and accounts for the 15% and 30% cost increases in the two designated regions. For each passenger scenario, the aircraft comparison screens out options that exceed the flight limit and ranks the remaining options by total operating cost.
 
-        while open_set:
+<!-- 这里放 Task 1 路线图。下面先用了仓库已有的旧路线图。用正式脚本重新出图后，把新图放进仓库并替换路径。图上标出起终点、障碍和两个成本区。 -->
 
-            _, current = heapq.heappop(open_set)
+![Original Task 1 route](./Original%20Task%201%20Path)
 
-            if current in closed_set:
-                continue
+<!-- 从正式输出填入三个场景的最终结果。总成本是整个场景的费用。表后用一句话说明胜出机型，并列出超出班次上限的机型。 -->
 
-            if current == goal:
-                break
+| Scenario | Passengers | Flight limit | Fuel price ($/kg) | Selected aircraft | Flights | Total cost ($) |
+|---|---:|---:|---:|---|---:|---:|
+| 1 | 3,300 | 13 | 0.85 | — | — | — |
+| 2 | 1,500 | 7 | 0.96 | — | — | — |
+| 3 | 2,250 | 25 | 0.78 | — | — | — |
 
-            closed_set.add(current)
+## Task 2
 
-            x, y = current
+### Jet Stream Placement
 
-            for dx, dy, move_cost in self.motion:
+The model adds a horizontal jet stream that spans the map and is five units high. The current script sets its lower boundary to y = 5 and reduces the base movement cost in the band by 5%. The comparison uses Scenario 1.
 
-                nx = x + dx
-                ny = y + dy
+<!-- 下面已插入仓库现有的 Task 2 图。如果 PPT 用了另一张图，把原图放进仓库并改路径。若直接粘贴图片失败，可先存为 PNG，再用 ![图片英文说明](./文件名.png) 引用。 -->
 
-                neighbor = (nx, ny)
+![Task 2 route with the jet stream](./Task%202%20path.png)
 
-                if not (
-                    self.min_x < nx < self.max_x
-                    and self.min_y < ny < self.max_y
-                ):
-                    continue
+<!-- 这里填无气流、y = 5 和其他实际测试位置。填好后用一两句说明哪个测试位置成本最低，以及比无气流省多少。 -->
 
-                if neighbor in self.obstacles:
-                    continue
+| Jet stream placement | Route time (min) | Scenario 1 total cost ($) |
+|---|---:|---:|
+| No jet stream | — | — |
+| Lower boundary y = 5 | — | — |
 
-                if neighbor in closed_set:
-                    continue
+## Task 3
 
-                # Prevent diagonal movement through blocked corners
-                if dx != 0 and dy != 0:
-                    if (
-                        (x + dx, y) in self.obstacles
-                        or (x, y + dy) in self.obstacles
-                    ):
-                        continue
+### New Aircraft Design
 
-                new_cost = g_cost[current] + move_cost
+The design must carry 3,300 passengers in at most 13 flights. Candidate capacities range from 100 to 450 seats in steps of 50. Capacities below 300 seats use two engines, and capacities from 300 seats onward use four. The model compares fuel, time, and fixed costs.
 
-                if new_cost < g_cost.get(
-                    neighbor, float("inf")
-                ):
+<!-- 用 Task 3_Final 核对各座位档位。填每班三类费用与总成本，在表下写最终机名、座位数、发动机数和班次，并说明为什么选它。 -->
 
-                    g_cost[neighbor] = new_cost
-                    parent[neighbor] = current
+| Seats | Flights required | Engines | Fuel per flight ($) | Time per flight ($) | Fixed per flight ($) | Total cost ($) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 100–250 | Over 13 | 2 | — | — | — | Infeasible |
+| 300 | 11 | 4 | — | — | — | — |
+| 350 | 10 | 4 | — | — | — | — |
+| 400 | 9 | 4 | — | — | — | — |
+| 450 | 8 | 4 | — | — | — | — |
 
-                    heuristic = math.hypot(
-                        gx - nx,
-                        gy - ny
-                    )
+<!-- 如果 PPT 有成本对比图，把 PNG 放进仓库，例如 figures/task3-cost.png，再在这里加一行 ![Aircraft design cost comparison](./figures/task3-cost.png)。 -->
 
-                    f_cost = new_cost + heuristic
+## Task A1
 
-                    heapq.heappush(
-                        open_set,
-                        (f_cost, neighbor)
-                    )
+### Supply Checkpoints
 
-        if goal not in g_cost:
-            print("No path found.")
-            return [], []
+The planner generates one checkpoint in each cost region. It compares the two possible visit orders and selects the reachable order with the lower weighted travel time.
 
-        path = [goal]
-        current = goal
+<!-- 这里写随机种子、两个补给点坐标、两种顺序的用时及最终顺序。把生成的路线图放进仓库，再在这里插入 ![Route through both checkpoints](./figures/task-a1.png)。路径按实际文件名改。 -->
 
-        while current != start:
-            current = parent[current]
-            path.append(current)
+## Task A2
 
-        path.reverse()
+### Randomized Environment
 
-        rx = [point[0] for point in path]
-        ry = [point[1] for point in path]
+The program generates a 40 × 40 fuel-cost region, random obstacles, and endpoints at least 40 units apart. The planner moves in four directions.
 
-        return rx, ry
+<!-- 这里放一张实际生成的地图和路线，例如 ![Random map and planned route](./figures/task-a2.png)。图下写起终点距离、障碍密度、路径代价和随机设置。 -->
 
+## Task A3
 
-def main():
+### A*, Dijkstra, and RRT*
 
-    # Start and goal coordinates
-    sx, sy = 5, 40
-    gx, gy = 20, 30
+<!-- 用同一张地图和相同的起终点比较。填写同一成本口径下的结果，并记录 RRT* 的种子和迭代数。有对比图就放在表后，例如 ![Routes found by the three planners](./figures/task-a3.png)。 -->
 
-    # A* parameters
-    grid_size = 1.0
-    robot_radius = 0.0
+| Algorithm | Route cost | Runtime (s) | Notes |
+|---|---:|---:|---|
+| A* | — | — | Grid search with a heuristic |
+| Dijkstra | — | — | Grid search by accumulated cost |
+| RRT* | — | — | Sampling-based search |
 
-    # Set obstacle positions
-    ox, oy = [], []
+## How to Run
 
-    # Boundary obstacles
-    for i in range(-10, 61):
-        ox.append(i)
-        oy.append(-10.0)
+<!-- 这里给组员或老师复现。提交前核对 Python 版本、依赖、文件名和命令。若脚本改名，同时更新这里的链接。 -->
 
-    for i in range(-10, 61):
-        ox.append(i)
-        oy.append(60.0)
+Run the scripts from the repository root with Python 3 and Matplotlib installed.
 
-    for i in range(-10, 61):
-        ox.append(-10.0)
-        oy.append(i)
+| Task | Source file | Command |
+|---|---|---|
+| 1 | [Task 1_Final](./Task%201_Final) | `python "Task 1_Final"` |
+| 2 | [Task 2_Final](./Task%202_Final) | `python "Task 2_Final"` |
+| 3 | [Task 3_Final](./Task%203_Final) | `python "Task 3_Final"` |
+| A1 | [Task A1_Final](./Task%20A1_Final) | `python "Task A1_Final" --no-show` |
+| A2 | [Task A2_Final](./Task%20A2_Final) | `python "Task A2_Final"` |
+| A3 | [Dijkstra](./Task%20A3.1_Final) and [RRT*](./Task%20A3.2_Final) | `python "Task A3.1_Final"` and `python "Task A3.2_Final"` |
 
-    for i in range(-10, 61):
-        ox.append(60.0)
-        oy.append(i)
+## Team Members and Contributions
 
-    # Vertical obstacle: (10,10) to (10,45)
-    for i in range(10, 46):
-        ox.append(10.0)
-        oy.append(float(i))
-
-    # Horizontal obstacle: (10,45) to (50,45)
-    for i in range(10, 51):
-        ox.append(float(i))
-        oy.append(45.0)
-
-    # Diagonal obstacle: (30,45) to (40,0)
-    for i in range(101):
-        t = i / 100.0
+<!-- 保留了草稿中的八行。填真实姓名和实际分工。学号只按课程要求填写。 -->
 
-        x = 30.0 + 10.0 * t
-        y = 45.0 - 45.0 * t
+| Name | Student ID | Contribution |
+|---|---|---|
+| Member 1 | — | — |
+| Member 2 | — | — |
+| Member 3 | — | — |
+| Member 4 | — | — |
+| Member 5 | — | — |
+| Member 6 | — | — |
+| Member 7 | — | — |
+| Member 8 | — | — |
 
-        ox.append(x)
-        oy.append(y)
+## References
 
-    # Create the A* planner
-    a_star = AStarPlanner(
-        ox, oy, grid_size, robot_radius
-    )
+<!-- 补上实际借鉴的 Dijkstra、RRT* 原始 GitHub 文件链接。若图片来自外部，也在这里注明出处。 -->
 
-    # Calculate the path
-    rx, ry = a_star.planning(
-        sx, sy, gx, gy
-    )
+- [AAE1001 course repository](https://github.com/RNS-Lab-PolyU/PolyU_AAE1001_Github_Project_2026)
 
-    if not rx:
-        return
+## Individual Reflections
 
-    # Calculate the travel distance and time
-    total_distance = 0.0
+<details>
+<summary><strong>Louis</strong></summary>
 
-    for i in range(1, len(rx)):
-        dx = rx[i] - rx[i - 1]
-        dy = ry[i] - ry[i - 1]
+I developed Task A1 with ChatGPT's help and created the presentation slides for Task 1. I also helped the group interpret the requirements for Task 2, revised a teammate’s implementation for Task 3, and organized the project README.
 
-        total_distance += math.hypot(dx, dy)
+Creating the Task 1 slides taught me to explain the route-planning method and aircraft selection in a sequence the audience could follow. I applied the same idea to the README by organizing the report by task. Across these contributions, I learned that a result is easier to understand and verify when the assumptions, method, and evidence have clear logic.
 
-    print("Start node:", (sx, sy))
-    print("Goal node:", (gx, gy))
-    print("Number of path nodes:", len(rx))
-    print("Total distance:", round(total_distance, 2))
-    print("Travel time without area penalties:",
-          round(total_distance, 2), "minutes")
+For Task 2, my role was to clarify the requirements and help plan the comparison. I helped define what we needed to compare across jet stream placements, including route time and total operating cost for Scenario 1. For Task 3, I built on my teammate’s code by correcting parts of the cost calculation and checking the flight limit, which helped me understand how seating capacity affects both the number of flights and the total cost.
 
-    # Plot the obstacles and path
-    if show_animation:
+For Task A1, I wrote the planner to generate one checkpoint in each cost region and visit both before reaching the destination. I compared the two possible visit orders using the total weighted travel time. Using a fixed random seed made the example reproducible, which helped me check the route and explain why the planner chose that order.
 
-        plt.figure(figsize=(10, 8))
+</details>
 
-        # Fuel-consuming area
-        plt.fill(
-            [0, 30, 30, 0],
-            [0, 0, 10, 10],
-            color="yellow",
-            alpha=0.6,
-            label="Fuel-consuming area"
-        )
-
-        # Time-consuming area
-        plt.fill(
-            [50, 60, 60, 50],
-            [-10, -10, 0, 0],
-            color="red",
-            alpha=0.5,
-            label="Time-consuming area"
-        )
-
-        # Obstacles
-        plt.plot(ox, oy, ".k", markersize=2)
-
-        # Start and goal
-        plt.plot(
-            sx, sy, "*b",
-            markersize=14,
-            label="Start"
-        )
-
-        plt.plot(
-            gx, gy, "*g",
-            markersize=14,
-            label="Goal"
-        )
-
-        # A* path
-        plt.plot(
-            rx, ry, "-r",
-            linewidth=2,
-            label="A* path"
-        )
-
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.title("Group 5 - A* Pathfinding")
-
-        plt.xlim(-10, 60)
-        plt.ylim(-10, 60)
-
-        plt.xticks(range(-10, 61, 10))
-        plt.yticks(range(-10, 61, 10))
-
-        plt.grid(True)
-        plt.axis("equal")
-        plt.legend()
-        plt.show()
-
-
-if __name__ == "__main__":
-    main()
-
-
-----------------
-
-"""
-AAE1001 - Group 5 - Task 2
-Full fixed version (Matplotlib 3.10+ compatible)
-"""
-
-import math
-import matplotlib.pyplot as plt
-import warnings
-from matplotlib import MatplotlibDeprecationWarning
-
-# Suppress the deprecation warnings
-warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
-
-show_animation = False   # set to False if you only want numbers
-# Task 2: horizontal jet stream across the map
-JET_STREAM_Y_MIN = 5.0
-JET_STREAM_HEIGHT = 5.0
-JET_STREAM_FACTOR = 0.95
-
-class AStarPlanner:
-
-    def __init__(self, ox, oy, resolution, rr, fc_x, fc_y, tc_x, tc_y):
-        self.resolution = resolution
-        self.rr = rr
-        self.min_x = self.min_y = 0
-        self.max_x = self.max_y = 0
-        self.obstacle_map = None
-        self.x_width = self.y_width = 0
-        self.motion = self.get_motion_model()
-        self.calc_obstacle_map(ox, oy)
-
-        self.fc_x = fc_x
-        self.fc_y = fc_y
-        self.tc_x = tc_x
-        self.tc_y = tc_y
-
-        self.Delta_TC = 0.30   # +30 % time-consuming area (pink)
-        self.Delta_FC = 0.15   # +15 % fuel-consuming area (yellow)
-        self.costPerGrid = 1.0
-
-    class Node:
-        def __init__(self, x, y, cost, parent_index):
-            self.x = x
-            self.y = y
-            self.cost = cost
-            self.parent_index = parent_index
-
-    def planning(self, sx, sy, gx, gy):
-        start_node = self.Node(self.calc_xy_index(sx, self.min_x),
-                               self.calc_xy_index(sy, self.min_y), 0.0, -1)
-        goal_node  = self.Node(self.calc_xy_index(gx, self.min_x),
-                               self.calc_xy_index(gy, self.min_y), 0.0, -1)
-
-        open_set, closed_set = {}, {}
-        open_set[self.calc_grid_index(start_node)] = start_node
-
-        while True:
-            if not open_set:
-                print("Open set is empty – no path found")
-                return [], [], None
-
-            c_id = min(open_set,
-                       key=lambda o: open_set[o].cost +
-                       self.calc_heuristic(goal_node, open_set[o]))
-            current = open_set[c_id]
-
-            # Fixed plotting (no float deprecation warning)
-            if show_animation:
-                x_pos = int(round(self.calc_grid_position(current.x, self.min_x)))
-                y_pos = int(round(self.calc_grid_position(current.y, self.min_y)))
-                plt.plot(x_pos, y_pos, "xc")
-                plt.gcf().canvas.mpl_connect(
-                    'key_release_event',
-                    lambda event: [exit(0) if event.key == 'escape' else None])
-                if len(closed_set) % 20 == 0:
-                    plt.pause(0.001)
-
-            if current.x == goal_node.x and current.y == goal_node.y:
-                print(f"\n>>> Total Trip time required (T_best) = {current.cost:.4f} minutes")
-                goal_node.parent_index = current.parent_index
-                goal_node.cost = current.cost
-                break
-
-            del open_set[c_id]
-            closed_set[c_id] = current
-
-            for i, _ in enumerate(self.motion):
-                node = self.Node(current.x + self.motion[i][0],
-                                 current.y + self.motion[i][1],
-                                 current.cost + self.motion[i][2] * self.costPerGrid,
-                                 c_id)
-
-                px = self.calc_grid_position(node.x, self.min_x)
-                py = self.calc_grid_position(node.y, self.min_y)
-
-                # Time-consuming area (pink) +30%
-                if px in self.tc_x and py in self.tc_y:
-                    node.cost += self.Delta_TC * self.motion[i][2]
-
-                # Fuel-consuming area (yellow) +15%
-                if px in self.fc_x and py in self.fc_y:
-                    node.cost += self.Delta_FC * self.motion[i][2]
-
-                n_id = self.calc_grid_index(node)
-
-                if not self.verify_node(node):
-                    continue
-                if n_id in closed_set:
-                    continue
-                if n_id not in open_set or open_set[n_id].cost > node.cost:
-                    open_set[n_id] = node
-
-        rx, ry = self.calc_final_path(goal_node, closed_set)
-        return rx, ry, goal_node.cost
-
-    def calc_final_path(self, goal_node, closed_set):
-        rx = [self.calc_grid_position(goal_node.x, self.min_x)]
-        ry = [self.calc_grid_position(goal_node.y, self.min_y)]
-        parent_index = goal_node.parent_index
-        while parent_index != -1:
-            n = closed_set[parent_index]
-            rx.append(self.calc_grid_position(n.x, self.min_x))
-            ry.append(self.calc_grid_position(n.y, self.min_y))
-            parent_index = n.parent_index
-        return rx, ry
-
-    def calc_heuristic(self, n1, n2):
-        return math.hypot(n1.x - n2.x, n1.y - n2.y) * self.costPerGrid
-
-    def calc_grid_position(self, index, min_position):
-        return index * self.resolution + min_position
-
-    def calc_xy_index(self, position, min_pos):
-        return round((position - min_pos) / self.resolution)
-
-    def calc_grid_index(self, node):
-        return (node.y - self.min_y) * self.x_width + (node.x - self.min_x)
-
-    def verify_node(self, node):
-        px = self.calc_grid_position(node.x, self.min_x)
-        py = self.calc_grid_position(node.y, self.min_y)
-        if px < self.min_x or py < self.min_y or px >= self.max_x or py >= self.max_y:
-            return False
-        if self.obstacle_map[node.x][node.y]:
-            return False
-        return True
-
-    def calc_obstacle_map(self, ox, oy):
-        self.min_x = round(min(ox))
-        self.min_y = round(min(oy))
-        self.max_x = round(max(ox))
-        self.max_y = round(max(oy))
-        print(f"Map range: x[{self.min_x}, {self.max_x}], y[{self.min_y}, {self.max_y}]")
-
-        self.x_width = round((self.max_x - self.min_x) / self.resolution)
-        self.y_width = round((self.max_y - self.min_y) / self.resolution)
-
-        self.obstacle_map = [[False] * self.y_width for _ in range(self.x_width)]
-        for ix in range(self.x_width):
-            x = self.calc_grid_position(ix, self.min_x)
-            for iy in range(self.y_width):
-                y = self.calc_grid_position(iy, self.min_y)
-                for iox, ioy in zip(ox, oy):
-                    if math.hypot(iox - x, ioy - y) <= self.rr:
-                        self.obstacle_map[ix][iy] = True
-                        break
-
-    @staticmethod
-    def get_motion_model():
-        return [[1, 0, 1], [0, 1, 1], [-1, 0, 1], [0, -1, 1],
-                [-1, -1, math.sqrt(2)], [-1, 1, math.sqrt(2)],
-                [1, -1, math.sqrt(2)], [1, 1, math.sqrt(2)]]
-
-
-def main():
-    print("=" * 60)
-    print("AAE1001 – Group 5 – Task 1")
-    print("=" * 60)
-
-    # Start & Goal (Group 5)
-    sx, sy = 5.0, 40.0
-    gx, gy = 20.0, 30.0
-    grid_size = 1.0
-    robot_radius = 0.5
-
-    # ---------- Obstacles ----------
-    ox, oy = [], []
-
-    # Outer borders
-    for i in range(-10, 61):
-        ox.append(i)
-        oy.append(-10.0)
-        ox.append(60.0)
-        oy.append(i)
-        ox.append(i)
-        oy.append(60.0)
-        ox.append(-10.0)
-        oy.append(i)
-
-    # Horizontal barrier at y=45 (x=10 to 50)
-    for i in range(10, 51):
-        ox.append(float(i))
-        oy.append(45.0)
-
-    # Vertical barrier at x=10 (y=10 to 45)
-    for y in range(10, 46):
-        ox.append(10.0)
-        oy.append(float(y))
-
-    # Diagonal from (30,45) to (40,0)
-    for k in range(0, 101):
-        x = 30.0 + 0.1 * k
-        y = 45.0 - 4.5 * 0.1 * k
-        ox.append(x)
-        oy.append(y)
-
-    # ---------- Fuel-consuming area (yellow) ----------
-    fc_x, fc_y = [], []
-    for i in range(-10, 31):
-        for j in range(0, 11):
-            fc_x.append(i)
-            fc_y.append(j)
-
-    # ---------- Time-consuming area (pink) ----------
-    tc_x, tc_y = [], []
-    for i in range(50, 61):
-        for j in range(0, 11):
-            tc_x.append(i)
-            tc_y.append(j)
-
-    # ---------- Plot setup ----------
-    if show_animation:
-        plt.figure(figsize=(10, 8))
-        plt.plot(ox, oy, ".k", markersize=2, label="Obstacles")
-        plt.plot(fc_x, fc_y, "oy", markersize=3, alpha=0.4, label="Fuel-consuming (+15%)")
-        plt.plot(tc_x, tc_y, "or", markersize=3, alpha=0.4, label="Time-consuming (+30%)")
-        plt.plot(sx, sy, "b*", markersize=15, label="Start")
-        plt.plot(gx, gy, "g*", markersize=15, label="Goal")
-        plt.grid(True)
-        plt.axis("equal")
-        plt.title("Group 5 – Path Planning")
-        plt.legend(loc="upper right")
-
-    # ---------- Run A* ----------
-    a_star = AStarPlanner(ox, oy, grid_size, robot_radius, fc_x, fc_y, tc_x, tc_y)
-    rx, ry, T_best = a_star.planning(sx, sy, gx, gy)
-
-    if T_best is None:
-        print("No path found!")
-        return
-
-    if show_animation:
-        plt.plot(rx, ry, "-r", linewidth=2, label="Optimal path")
-        plt.legend(loc="upper right")
-        plt.show()
-
-    # ============================================================
-    # Cost calculation for the three scenarios
-    # ============================================================
-    print("\n" + "=" * 60)
-    print(f"T_best used for all scenarios = {T_best:.4f} minutes")
-    print("=" * 60)
-
-    aircraft = {
-        "A321neo":      {"rate": 54, "cap": 200, "low": 10, "med": 15, "high": 20, "Cc": 1800},
-        "A330-900neo":  {"rate": 84, "cap": 300, "low": 15, "med": 21, "high": 27, "Cc": 2000},
-        "A350-900":     {"rate": 90, "cap": 350, "low": 20, "med": 27, "high": 34, "Cc": 2500},
-    }
-
-    scenarios = [
-        {"name": "Scenario 1", "pax": 3300, "max_f": 13, "time": "med",  "Cf": 0.85},
-        {"name": "Scenario 2", "pax": 1500, "max_f":  7, "time": "high", "Cf": 0.96},
-        {"name": "Scenario 3", "pax": 2250, "max_f": 25, "time": "low",  "Cf": 0.78},
-    ]
-
-    for sc in scenarios:
-        print(f"\n----- {sc['name']} -----")
-        print(f"Passengers: {sc['pax']} | Max flights: {sc['max_f']} | "
-              f"Time cost: {sc['time']} | Fuel price: {sc['Cf']} $/kg")
-
-        best_total = float("inf")
-        best_name = None
-        best_n = None
-
-        for name, ac in aircraft.items():
-            n_needed = math.ceil(sc["pax"] / ac["cap"])
-            if n_needed > sc["max_f"]:
-                print(f"  {name:12s}: needs {n_needed} flights > max {sc['max_f']} → INFEASIBLE")
-                continue
-
-            Ct = ac[sc["time"]]
-            trip = sc["Cf"] * ac["rate"] * T_best + Ct * T_best + ac["Cc"]
-            total = trip * n_needed
-
-            print(f"  {name:12s}: {n_needed:2d} flights × ${trip:8.2f} = ${total:10.2f}")
-
-            if total < best_total:
-                best_total = total
-                best_name = name
-                best_n = n_needed
-
-        print(f"  >>> BEST: {best_n} flights of {best_name}  →  total cost ${best_total:.2f}")
-
-
-if __name__ == "__main__":
-    main()
+<details>
+<summary><strong>Member 2</strong></summary>
+
+<!-- 把 Member 2 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+
+</details>
+
+<details>
+<summary><strong>Member 3</strong></summary>
+
+<!-- 把 Member 3 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+
+</details>
+
+<details>
+<summary><strong>Member 4</strong></summary>
+
+<!-- 把 Member 4 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+
+</details>
+
+<details>
+<summary><strong>Member 5</strong></summary>
+
+<!-- 把 Member 5 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+
+</details>
+
+<details>
+<summary><strong>Member 6</strong></summary>
+
+<!-- 把 Member 6 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+
+</details>
+
+<details>
+<summary><strong>Member 7</strong></summary>
+
+<!-- 把 Member 7 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+
+</details>
+
+<details>
+<summary><strong>Member 8</strong></summary>
+
+<!-- 把 Member 8 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+
+</details>
