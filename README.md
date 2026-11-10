@@ -217,7 +217,7 @@ For the numerical checks documented here, plotting was disabled; no new route im
 |---|---|---|
 | Louis | 26125637D | I completed Task A1 with ChatGPT's help, created the Task 1 presentation, helped clarify the Task 2 requirements, and revised the cost calculations and flight constraints in a teammate’s Task 3 code. |
 | Romeo | 26088558D | Refined the programs for all tasks and tailored the aircraft design approach |
-| Member 3 | — | — |
+| Sahil | 26127898D | Wrote the code that helped do the calculations for Task 3, helped check the best approaches with the jet stream with teammates in Task 2, and developed presentation slides for Task A3 |
 | Member 4 | — | — |
 | Member 5 | — | — |
 | Member 6 | — | — |
@@ -273,9 +273,15 @@ This assignment taught me to check constraints before comparing costs and to con
 </details>
 
 <details>
-<summary><strong>Member 3</strong></summary>
+<summary><strong>Sahil</strong></summary>
 
-<!-- 把 Member 3 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+In Task 2, a teammate created the code which implemented the jetstream area into the map, to which me and other teammates helped find what was the ideal position to place the jetstream to output the lowest cost.
+
+For Task 3, our objective was to find the ideal plane load that would adhere to scenario 1's requirements, while also keeping costs to a minimum, we had to choose how much passengers to have in increments of 50, and if we exceeded 300 passengers, we would require 4 engines. All these variables added onto the formula given to us by the task itself ( C = (Cf . dF . Tbest) + (Ct . Tbest . Cc) ). I designed a program that did the calculations from the given formula based on our input of passenger load, allowing us to find the ideal load with ease.
+
+Finally I was tasked with creating the presentation slides for Task A3, which was the comparison of two other search algorithms and the A* planner. I conducted research on the two chosen search algorithms and gave a brief explanation on each, also listing their main strength and disadvantage. At the end I also compared the total cost estimated from all three algorithms, and their respective runtimes. 
+
+Ultimately, this project bridged the gap between theoretical aeronautics and computational problem-solving. By automating cost formulas and analyzing environmental variables like jetstreams, I learned how to translate strict operational constraints into efficient programmatic solutions. Furthermore, comparing the A* planner against other search algorithms sharpened my ability to critically evaluate technical approaches, specifically balancing computational runtime against optimization outcomes. Moving forward, the ability to build automated mathematical models and analytically present complex data will be invaluable for tackling advanced aircraft performance analysis, flight routing, and systems design.
 
 </details>
 
