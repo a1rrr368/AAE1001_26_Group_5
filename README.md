@@ -216,7 +216,7 @@ For the numerical checks documented here, plotting was disabled; no new route im
 | Name | Student ID | Contribution |
 |---|---|---|
 | Member 1 | — | — |
-| Member 2 | — | — |
+| Romeo | 26088558D | Refined the programs for all tasks and tailored the aircraft design approach |
 | Member 3 | — | — |
 | Member 4 | — | — |
 | Member 5 | — | — |
