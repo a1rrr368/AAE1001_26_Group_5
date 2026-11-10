@@ -215,7 +215,7 @@ For the numerical checks documented here, plotting was disabled; no new route im
 
 | Name | Student ID | Contribution |
 |---|---|---|
-| Member 1 | — | — |
+| Louis | 26125637D | I completed Task A1 with ChatGPT's help, created the Task 1 presentation, helped clarify the Task 2 requirements, and revised the cost calculations and flight constraints in a teammate’s Task 3 code. |
 | Romeo | 26088558D | Refined the programs for all tasks and tailored the aircraft design approach |
 | Member 3 | — | — |
 | Member 4 | — | — |
