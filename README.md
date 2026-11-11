@@ -184,12 +184,12 @@ The source files without a `.py` extension can still be run using the quoted fil
 
 | Task | Source file | Command |
 |---|---|---|
-| 1 | [Task 1_Final](./Task%201_Final) | `python "Task 1_Final"` |
-| 2 | [Task 2_Final](./Task%202_Final) | `python "Task 2_Final"` |
-| 3 | [Task 3_Final](./Task%203_Final) | `python "Task 3_Final"` |
-| A1 | [Task A1_Final](./Task%20A1_Final) | `python "Task A1_Final" --no-show` |
-| A2 | [Task A2_Final](./Task%20A2_Final) | `python "Task A2_Final"` |
-| A3 | [Dijkstra](./Task%20A3.1_Final) and [RRT*](./Task%20A3.2_Final) | `python "Task A3.1_Final"` and `python "Task A3.2_Final"` |
+| 1 | [Task1_Final.py](./Task%201_Final) | `python "Task 1_Final"` |
+| 2 | [Task2_Final.py](./Task%202_Final) | `python "Task 2_Final"` |
+| 3 | [Task3_Final.py](./Task%203_Final) | `python "Task 3_Final"` |
+| A1 | [TaskA1_Final.py](./Task%20A1_Final) | `python "Task A1_Final" --no-show` |
+| A2 | [TaskA2_Final.py](./Task%20A2_Final) | `python "Task A2_Final"` |
+| A3 | [Dijkstra](./Task%20A3.1_Final) and [RRT*](./Task%20A3.2_Final) | `python "TaskA3.1_Final.py"` and `python "TaskA3.2_Final.py"` |
 
 Task 1, Task 2, A2 and A3 display plots by default. Set their existing `show_animation` variable to `False` when collecting numerical results or timings. Task 3 repeatedly asks for a capacity; use 300, 350, 400 or 450 for feasible designs and press Ctrl+C to stop. Its current code does not handle non-integer input or zero safely.
 

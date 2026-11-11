@@ -1,0 +1,17 @@
+AAE1001 - Group 5 - Task A1
+Seed: 5
+Start: (5.0, 40.0); Base: (20.0, 30.0)
+Fuel checkpoint: (7, 6)
+Time checkpoint: (59, 1)
+
+Compare both checkpoint orders:
+  Fuel -> Time: 148.2168 minutes
+  Time -> Fuel: 178.0319 minutes
+
+Selected order: Fuel -> Time
+Total weighted travel time: 148.2168 minutes
+Grid moves: 125
+Both checkpoints visited before first arrival at base: PASS
+Model: original Task 1 map and 8-direction movement;
+entering the yellow/pink area adds 15%/30% to step time.
+Each order uses three A* searches; choose the smaller total.
