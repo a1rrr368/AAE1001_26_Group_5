@@ -293,7 +293,16 @@ Ultimately, this project bridged the gap between theoretical aeronautics and com
 </details>
 
 <details>
-<summary><strong>Member 5</strong></summary>
+<summary><strong>Sama</strong></summary>
+ In Task 1, I worked on modifying the path planning program (A* code) to make it compatible with our assigned task. I modified the routing script to navigate around obstacles and penalty zones, outputting accurate value for the best path from the start node to the end node. Afterwards, I collaborated with my peers in class to evaluate the overall operational cost using the formula provided, factoring in aircraft performance metrics such as fuel consumption rate, passenger capacity, fixed costs, and variable time-related costs. 
+
+In Task 2, I collaborated with my teammates in class to figure out the ideal position to place the new jet stream that aims to reduce the overall trip cost. 
+
+In Task 3, I worked with a peer to modify the program so that it can provide us with the total cost based on the input provided (number of passengers). That helped us easily identify the cost, ideal load, and suitable aircraft design based on scenario 1. 
+
+Finally, I was assigned to prepare slides for our final presentation where I would explain our project's main objective and an overview for each task of the 3 core tasks and 3 additional tasks. Moreover, I prepared slides that present the introduction to path planning, cost intensive area, and total cost formula that was used on most of the programs that we modified. 
+
+Overall, this project introduced me to factors that must be considered while making decisions that aim to reduce cost and increase efficiency. Additionally, it helped me understand concepts in the field of aviation and how they manage to solve problems by generating solutions where computational logic must align with real-world applicability. I also learned how to collaborate with peers on the GitHub platform to build solutions.  
 
 <!-- 把 Member 5 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
 
