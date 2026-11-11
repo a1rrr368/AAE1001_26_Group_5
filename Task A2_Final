@@ -8,7 +8,9 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore", category=matplotlib.MatplotlibDeprecationWarning)
 warnings.filterwarnings("ignore", message="Ignoring fixed x limits")
 
-show_animation = True
+# REVIEW NOTE: Week 9b p.4 requires only a random fuel region, cardinal moves,
+# random obstacles/endpoints, >=40-unit separation and unobscured obstacle plotting.
+show_animation = True  # False disables plotting, not route calculation.
 
 
 class AStarPlanner:
@@ -25,6 +27,12 @@ class AStarPlanner:
         self.fuel_x = fuel_x
         self.fuel_y = fuel_y
 
+        # REVIEW CHANGE 1: Cache static coordinate membership; preserve list attributes.
+        # Rebuild these caches if region coordinates are modified after construction.
+        self._fuel_x = frozenset(fuel_x)
+        self._fuel_y = frozenset(fuel_y)
+
+        # REVIEW NOTE: A2 uses a 50% weighted movement penalty, not a dollar charge.
         self.Delta_Fuel = 0.5
         self.costPerGrid = 1.0
 
@@ -51,10 +59,17 @@ class AStarPlanner:
         open_set, closed_set = dict(), dict()
         open_set[self.calc_grid_index(start_node)] = start_node
 
+        # REVIEW CHANGE 3: Register Escape once per search, not once per node.
+        if show_animation:
+            plt.gcf().canvas.mpl_connect(
+                'key_release_event',
+                lambda event: [exit(0) if event.key == 'escape' else None])
+
         while True:
             if len(open_set) == 0:
+                # REVIEW FIX 1: Report failure without inventing a goal-only path.
                 print("Open set is empty – no path found.")
-                break
+                return [], []
 
             c_id = min(
                 open_set,
@@ -65,9 +80,6 @@ class AStarPlanner:
             if show_animation:
                 plt.plot(self.calc_grid_position(current.x, self.min_x),
                          self.calc_grid_position(current.y, self.min_y), "xc")
-                plt.gcf().canvas.mpl_connect(
-                    'key_release_event',
-                    lambda event: [exit(0) if event.key == 'escape' else None])
                 if len(closed_set) % 20 == 0:
                     plt.pause(0.001)
 
@@ -89,7 +101,7 @@ class AStarPlanner:
 
                 px = self.calc_grid_position(node.x, self.min_x)
                 py = self.calc_grid_position(node.y, self.min_y)
-                if px in self.fuel_x and py in self.fuel_y:
+                if px in self._fuel_x and py in self._fuel_y:
                     node.cost += self.Delta_Fuel * self.motion[i][2]
 
                 n_id = self.calc_grid_index(node)
@@ -155,11 +167,13 @@ class AStarPlanner:
 
         self.obstacle_map = [[False for _ in range(self.y_width)]
                              for _ in range(self.x_width)]
+        # REVIEW CHANGE 2: Reuse obstacle pairs; retain order and exact collision math.
+        obstacle_points = tuple(zip(ox, oy))
         for ix in range(self.x_width):
             x = self.calc_grid_position(ix, self.min_x)
             for iy in range(self.y_width):
                 y = self.calc_grid_position(iy, self.min_y)
-                for iox, ioy in zip(ox, oy):
+                for iox, ioy in obstacle_points:
                     if math.hypot(iox - x, ioy - y) <= self.rr:
                         self.obstacle_map[ix][iy] = True
                         break
@@ -182,23 +196,40 @@ def generate_random_environment(map_min=-10, map_max=60,
         ox.extend([i, i, map_min, map_max])
         oy.extend([map_min, map_max, i, i])
 
+    # REVIEW NOTE: No default seed is imposed; preserve the existing random stream.
+    # Set random.seed externally when comparing old and new versions.
+    # REVIEW FIX 2: Check both sampled positions and the actual unit-grid endpoints.
+    # This matches AStarPlanner.calc_xy_index with the current grid_size=1.
+    # Rejecting a previously accepted pair can change the following random map.
+    grid_origin = round(map_min)
     while True:
         sx = random.uniform(map_min + 5, map_max - 5)
         sy = random.uniform(map_min + 5, map_max - 5)
         gx = random.uniform(map_min + 5, map_max - 5)
         gy = random.uniform(map_min + 5, map_max - 5)
-        if math.hypot(sx - gx, sy - gy) >= min_start_goal_dist:
+        sampled_distance = math.hypot(sx - gx, sy - gy)
+        grid_distance = math.hypot(
+            round(sx - grid_origin) - round(gx - grid_origin),
+            round(sy - grid_origin) - round(gy - grid_origin))
+        if (sampled_distance >= min_start_goal_dist and
+                grid_distance >= min_start_goal_dist):
             break
 
     fx0 = random.randint(map_min + 2, map_max - fuel_size - 2)
     fy0 = random.randint(map_min + 2, map_max - fuel_size - 2)
     fuel_x, fuel_y = [], []
+    # REVIEW NOTE: fuel_size=40 creates 40x40 integer grid samples.
+    # Their outermost sample coordinates span 39 units; no continuous rectangle
+    # of side 40 is drawn. Confirm the grid-cell versus geometric-area convention
+    # before changing the region or its visualization, as results would change.
     for i in range(fx0, fx0 + fuel_size):
         for j in range(fy0, fy0 + fuel_size):
             fuel_x.append(i)
             fuel_y.append(j)
 
     area = (map_max - map_min) ** 2
+    # REVIEW NOTE: Density controls candidate count, not final occupied-cell ratio.
+    # Clearance rejection can leave fewer obstacles than n_obs.
     n_obs = int(area * obstacle_density)
 
     for _ in range(n_obs):
@@ -238,8 +269,9 @@ def main():
     print(f"Goal  : ({gx:.1f}, {gy:.1f})")
     print(f"Distance start-goal: {math.hypot(sx-gx, sy-gy):.1f}")
 
+    # REVIEW FIX 3: Draw obstacles above fuel/search markers so they stay visible.
     if show_animation:
-        plt.plot(ox, oy, ".k", markersize=2, label="Obstacles")
+        plt.plot(ox, oy, ".k", markersize=2, label="Obstacles", zorder=3)
         plt.plot(fuel_x, fuel_y, "s", color="cyan", alpha=0.35,
                  markersize=3, label="Fuel-consuming area (40×40)")
         plt.plot(sx, sy, "og", markersize=10, label="Start")
@@ -247,7 +279,8 @@ def main():
 
         plt.grid(True)
         plt.axis("equal")          # keep this
-        # removed the two lines that caused the warning:
+        # Keep automatic limits: explicit xlim/ylim conflict with this aspect setup.
+        # Historical fixed-limit calls (intentionally disabled):
         # plt.xlim(...)
         # plt.ylim(...)
         plt.title("Task A2 – Changing Environment\n"
@@ -267,3 +300,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
