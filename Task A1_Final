@@ -6,6 +6,10 @@ Run: python TaskA1_Checkpoints.py
 Use --seed N for another reproducible example, or --no-show to save only.
 """
 
+# REVIEW NOTE: Week 9b p.3 requires one checkpoint in each cost region,
+# both visited before base, with checkpoints and route plotted together.
+# REVIEW NOTE: Repository command: python "Task A1_Final" --no-show.
+# Keep the original module docstring/argparse help text unchanged for compatibility.
 import argparse
 import math
 from pathlib import Path
@@ -28,6 +32,13 @@ class AStarPlanner:
         self.fc_y = fc_y
         self.tc_x = tc_x
         self.tc_y = tc_y
+
+        # REVIEW CHANGE 1: Cache static coordinate membership; preserve list attributes.
+        # Rebuild these caches if region coordinates are modified after construction.
+        self._fc_x = frozenset(fc_x)
+        self._fc_y = frozenset(fc_y)
+        self._tc_x = frozenset(tc_x)
+        self._tc_y = frozenset(tc_y)
 
         self.Delta_TC = 0.30   # +30 % time-consuming area (pink)
         self.Delta_FC = 0.15   # +15 % fuel-consuming area (yellow)
@@ -82,11 +93,11 @@ class AStarPlanner:
                     continue
 
                 # Time-consuming area (pink) +30%
-                if px in self.tc_x and py in self.tc_y:
+                if px in self._tc_x and py in self._tc_y:
                     node.cost += self.Delta_TC * self.motion[i][2]
 
                 # Fuel-consuming area (yellow) +15%
-                if px in self.fc_x and py in self.fc_y:
+                if px in self._fc_x and py in self._fc_y:
                     node.cost += self.Delta_FC * self.motion[i][2]
 
                 n_id = self.calc_grid_index(node)
@@ -144,15 +155,19 @@ class AStarPlanner:
         self.y_width = round((self.max_y - self.min_y) / self.resolution)
 
         self.obstacle_map = [[False] * self.y_width for _ in range(self.x_width)]
+        # REVIEW CHANGE 2: Reuse obstacle pairs; retain order and exact collision math.
+        obstacle_points = tuple(zip(ox, oy))
         for ix in range(self.x_width):
             x = self.calc_grid_position(ix, self.min_x)
             for iy in range(self.y_width):
                 y = self.calc_grid_position(iy, self.min_y)
-                for iox, ioy in zip(ox, oy):
+                for iox, ioy in obstacle_points:
                     if math.hypot(iox - x, ioy - y) <= self.rr:
                         self.obstacle_map[ix][iy] = True
                         break
 
+    # REVIEW TODO (not applied): Lecture p.5 uses diagonal=2, legacy code sqrt(2).
+    # Changing it would change paths/costs; preserve the existing model in this revision.
     @staticmethod
     def get_motion_model():
         return [[1, 0, 1], [0, 1, 1], [-1, 0, 1], [0, -1, 1],
@@ -167,6 +182,7 @@ def plan_route(planner, points):
     for i in range(len(points) - 1):
         start = points[i]
         end = points[i + 1]
+        # REVIEW NOTE: Avoid the base on earlier legs; the last leg may reach it.
         avoid = points[-1] if i < len(points) - 2 else None
 
         xs, ys, trip_time = planner.planning(
@@ -176,6 +192,7 @@ def plan_route(planner, points):
         if trip_time is None:
             return [], [], None
 
+        # REVIEW NOTE: Planner returns goal-to-start; join legs start-to-goal.
         xs.reverse()
         ys.reverse()
 
@@ -248,9 +265,13 @@ def create_environment():
 
 def generate_checkpoint(planner, xs, ys, rng):
     """Sample strictly inside a cost area and reject occupied grid cells."""
+    # REVIEW CHANGE 3: Bounds are constant within this call; preserve random draw order.
+    # REVIEW NOTE: Strictly interior bounds satisfy the checkpoint-area requirement.
+    x_min, x_max = min(xs) + 1, max(xs) - 1
+    y_min, y_max = min(ys) + 1, max(ys) - 1
     for _ in range(10000):
-        point = (rng.randint(min(xs) + 1, max(xs) - 1),
-                 rng.randint(min(ys) + 1, max(ys) - 1))
+        point = (rng.randint(x_min, x_max),
+                 rng.randint(y_min, y_max))
         node = planner.Node(planner.calc_xy_index(point[0], planner.min_x),
                             planner.calc_xy_index(point[1], planner.min_y), 0, -1)
         if planner.verify_node(node):
@@ -350,6 +371,7 @@ def main():
     args = parser.parse_args()
 
     planner, start, goal, obstacles = create_environment()
+    # REVIEW NOTE: Default seed=5; do not alter sampling order or selected checkpoints.
     rng = random.Random(args.seed)
     fuel = generate_checkpoint(planner, planner.fc_x, planner.fc_y, rng)
     time = generate_checkpoint(planner, planner.tc_x, planner.tc_y, rng)
@@ -389,3 +411,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\nProgram stopped.")
+
