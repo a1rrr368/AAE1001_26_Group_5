@@ -308,10 +308,12 @@ Overall, this project introduced me to factors that must be considered while mak
 
 </details>
 
-<details>
-<summary><strong>Member 6</strong></summary>
+<details> <summary><strong>CHEN Lingxi</strong></summary>
+I worked on Task 2 and Task A3, and revised the PowerPoint slides to make the methods and results easier to follow.
 
-<!-- 把 Member 6 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+For Task 2, I helped implement and evaluate the jet-stream case. Rather than describing the stream only as a map feature, I checked its effect against the no-stream baseline: with the tested band five units high and its lower boundary at y = 5, the route time changed from 58.7875 to 58.5960 minutes. For Scenario 1, the reported cost fell from $81,751.58 to $81,557.02, a saving of $194.56 (about 0.238%). This comparison also made me careful not to call y = 5 the best possible placement, because we verified only that tested position.
+
+For Task A3, I completed the Dijkstra and RRT* implementations and compared them with A* on the same map, from (5, 40) to (20, 30). Dijkstra matched A* at a route cost of 58.7875, while the tested RRT* run returned 59.7257 using seed 0 and 5,000 iterations. I learned that these numbers need context: A* and Dijkstra use the same grid edges, while RRT* plans continuous segments and samples regional penalties differently. I revised the slides to show the shared setup, key results, and this limitation instead of presenting the algorithms as directly identical.
 
 </details>
 
