@@ -6,22 +6,258 @@ Review notes: REVIEW CHANGES.md. Printed headings are retained for compatibility
 
 import math
 import random
-import importlib.util
-import sys
+import heapq
 import time
-from pathlib import Path
 from matplotlib.collections import LineCollection
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 from matplotlib import MatplotlibDeprecationWarning
 
-import Task2_Final as astar_module
-
 # REVIEW NOTES: Suppress only Matplotlib deprecation warnings, not runtime errors.
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 
 show_animation = True   # False skips plotting; route and cost calculations still run.
+JET_STREAM_Y_MIN = 5.0
+JET_STREAM_HEIGHT = 5.0
+JET_STREAM_FACTOR = 1.0
+
+
+class AStarPlanner:
+
+    def __init__(self, ox, oy, resolution, rr, fc_x, fc_y, tc_x, tc_y):
+        self.resolution = resolution
+        self.rr = rr
+        self.min_x = self.min_y = 0
+        self.max_x = self.max_y = 0
+        self.obstacle_map = None
+        self.x_width = self.y_width = 0
+        self.motion = self.get_motion_model()
+        self.calc_obstacle_map(ox, oy)
+        self._fc_x, self._fc_y = frozenset(fc_x), frozenset(fc_y)
+        self._tc_x, self._tc_y = frozenset(tc_x), frozenset(tc_y)
+        self.Delta_TC = 0.30
+        self.Delta_FC = 0.15
+        self.costPerGrid = 1.0
+
+    class Node:
+        def __init__(self, x, y, cost, parent_index):
+            self.x = x
+            self.y = y
+            self.cost = cost
+            self.parent_index = parent_index
+
+    def planning(self, sx, sy, gx, gy, animate=None, print_result=True,
+                 progress_callback=None):
+        if animate is None:
+            animate = show_animation
+
+        start_node = self.Node(self.calc_xy_index(sx, self.min_x),
+                               self.calc_xy_index(sy, self.min_y), 0.0, -1)
+        goal_node = self.Node(self.calc_xy_index(gx, self.min_x),
+                              self.calc_xy_index(gy, self.min_y), 0.0, -1)
+        open_set, closed_set = {}, {}
+        open_set[self.calc_grid_index(start_node)] = start_node
+
+        if animate:
+            plt.gcf().canvas.mpl_connect(
+                "key_release_event",
+                lambda event: [exit(0) if event.key == "escape" else None],
+            )
+
+        while True:
+            if not open_set:
+                print("Open set is empty – no path found")
+                return [], [], None
+
+            c_id = min(
+                open_set,
+                key=lambda key: open_set[key].cost
+                + self.calc_heuristic(goal_node, open_set[key]),
+            )
+            current = open_set[c_id]
+            if progress_callback is not None:
+                progress_callback(
+                    self.calc_grid_position(current.x, self.min_x),
+                    self.calc_grid_position(current.y, self.min_y),
+                )
+
+            if animate:
+                plt.plot(
+                    round(self.calc_grid_position(current.x, self.min_x)),
+                    round(self.calc_grid_position(current.y, self.min_y)),
+                    "xc",
+                )
+                if len(closed_set) % 20 == 0:
+                    plt.pause(0.001)
+
+            if current.x == goal_node.x and current.y == goal_node.y:
+                if print_result:
+                    print(
+                        f"\n>>> Total Trip time required "
+                        f"(T_best) = {current.cost:.4f} minutes"
+                    )
+                goal_node.parent_index = current.parent_index
+                goal_node.cost = current.cost
+                break
+
+            del open_set[c_id]
+            closed_set[c_id] = current
+            for dx, dy, step_cost in self.motion:
+                node = self.Node(
+                    current.x + dx,
+                    current.y + dy,
+                    current.cost + step_cost * self.costPerGrid,
+                    c_id,
+                )
+                px = self.calc_grid_position(node.x, self.min_x)
+                py = self.calc_grid_position(node.y, self.min_y)
+                if px in self._tc_x and py in self._tc_y:
+                    node.cost += self.Delta_TC * step_cost
+                if px in self._fc_x and py in self._fc_y:
+                    node.cost += self.Delta_FC * step_cost
+                if JET_STREAM_Y_MIN <= py <= JET_STREAM_Y_MIN + JET_STREAM_HEIGHT:
+                    node.cost -= (1.0 - JET_STREAM_FACTOR) * step_cost * self.costPerGrid
+
+                n_id = self.calc_grid_index(node)
+                if not self.verify_node(node) or n_id in closed_set:
+                    continue
+                if n_id not in open_set or open_set[n_id].cost > node.cost:
+                    open_set[n_id] = node
+
+        return self.calc_final_path(goal_node, closed_set) + (goal_node.cost,)
+
+    def calc_final_path(self, goal_node, closed_set):
+        rx = [self.calc_grid_position(goal_node.x, self.min_x)]
+        ry = [self.calc_grid_position(goal_node.y, self.min_y)]
+        parent_index = goal_node.parent_index
+        while parent_index != -1:
+            node = closed_set[parent_index]
+            rx.append(self.calc_grid_position(node.x, self.min_x))
+            ry.append(self.calc_grid_position(node.y, self.min_y))
+            parent_index = node.parent_index
+        return rx, ry
+
+    def calc_heuristic(self, n1, n2):
+        return math.hypot(n1.x - n2.x, n1.y - n2.y) * self.costPerGrid
+
+    def calc_grid_position(self, index, min_position):
+        return index * self.resolution + min_position
+
+    def calc_xy_index(self, position, min_pos):
+        return round((position - min_pos) / self.resolution)
+
+    def calc_grid_index(self, node):
+        return (node.y - self.min_y) * self.x_width + (node.x - self.min_x)
+
+    def verify_node(self, node):
+        px = self.calc_grid_position(node.x, self.min_x)
+        py = self.calc_grid_position(node.y, self.min_y)
+        if px < self.min_x or py < self.min_y or px >= self.max_x or py >= self.max_y:
+            return False
+        return not self.obstacle_map[node.x][node.y]
+
+    def calc_obstacle_map(self, ox, oy):
+        self.min_x, self.min_y = round(min(ox)), round(min(oy))
+        self.max_x, self.max_y = round(max(ox)), round(max(oy))
+        print(
+            f"Map range: x[{self.min_x}, {self.max_x}], "
+            f"y[{self.min_y}, {self.max_y}]"
+        )
+        self.x_width = round((self.max_x - self.min_x) / self.resolution)
+        self.y_width = round((self.max_y - self.min_y) / self.resolution)
+        obstacle_points = tuple(zip(ox, oy))
+        self.obstacle_map = [[False] * self.y_width for _ in range(self.x_width)]
+        for ix in range(self.x_width):
+            x = self.calc_grid_position(ix, self.min_x)
+            for iy in range(self.y_width):
+                y = self.calc_grid_position(iy, self.min_y)
+                for iox, ioy in obstacle_points:
+                    if math.hypot(iox - x, ioy - y) <= self.rr:
+                        self.obstacle_map[ix][iy] = True
+                        break
+
+    @staticmethod
+    def get_motion_model():
+        return [
+            [1, 0, 1], [0, 1, 1], [-1, 0, 1], [0, -1, 1],
+            [-1, -1, math.sqrt(2)], [-1, 1, math.sqrt(2)],
+            [1, -1, math.sqrt(2)], [1, 1, math.sqrt(2)],
+        ]
+
+
+class DijkstraPlanner(AStarPlanner):
+
+    def planning(self, sx, sy, gx, gy, progress_callback=None):
+        start_node = self.Node(self.calc_xy_index(sx, self.min_x),
+                               self.calc_xy_index(sy, self.min_y), 0.0, -1)
+        goal_node = self.Node(self.calc_xy_index(gx, self.min_x),
+                              self.calc_xy_index(gy, self.min_y), 0.0, -1)
+        start_id = self.calc_grid_index(start_node)
+        open_set, closed_set = {start_id: start_node}, {}
+        priority_queue = [(start_node.cost, start_id)]
+
+        if show_animation:
+            plt.gcf().canvas.mpl_connect(
+                "key_release_event",
+                lambda event: [exit(0) if event.key == "escape" else None],
+            )
+
+        while priority_queue:
+            queued_cost, c_id = heapq.heappop(priority_queue)
+            if c_id not in open_set or queued_cost != open_set[c_id].cost:
+                continue
+            current = open_set[c_id]
+            if progress_callback is not None:
+                progress_callback(
+                    self.calc_grid_position(current.x, self.min_x),
+                    self.calc_grid_position(current.y, self.min_y),
+                )
+            if show_animation:
+                plt.plot(
+                    round(self.calc_grid_position(current.x, self.min_x)),
+                    round(self.calc_grid_position(current.y, self.min_y)),
+                    "xc",
+                )
+                if len(closed_set) % 20 == 0:
+                    plt.pause(0.001)
+
+            del open_set[c_id]
+            closed_set[c_id] = current
+            if current.x == goal_node.x and current.y == goal_node.y:
+                print(
+                    f"\n>>> Total Trip time required "
+                    f"(T_best) = {current.cost:.4f} minutes"
+                )
+                goal_node.parent_index = current.parent_index
+                goal_node.cost = current.cost
+                break
+
+            for dx, dy, step_cost in self.motion:
+                node = self.Node(
+                    current.x + dx,
+                    current.y + dy,
+                    current.cost + step_cost * self.costPerGrid,
+                    c_id,
+                )
+                px = self.calc_grid_position(node.x, self.min_x)
+                py = self.calc_grid_position(node.y, self.min_y)
+                if px in self._tc_x and py in self._tc_y:
+                    node.cost += self.Delta_TC * step_cost
+                if px in self._fc_x and py in self._fc_y:
+                    node.cost += self.Delta_FC * step_cost
+
+                n_id = self.calc_grid_index(node)
+                if not self.verify_node(node) or n_id in closed_set:
+                    continue
+                if n_id not in open_set or open_set[n_id].cost > node.cost:
+                    open_set[n_id] = node
+                    heapq.heappush(priority_queue, (node.cost, n_id))
+        else:
+            print("Priority queue is empty – no path found")
+            return [], [], None
+
+        return self.calc_final_path(goal_node, closed_set) + (goal_node.cost,)
 
 class RRTStarPlanner:
 
@@ -289,17 +525,6 @@ class RRTStarPlanner:
                         self.obstacle_map[ix][iy] = True
                         break
 
-def load_dijkstra_module():
-    module_path = Path(__file__).with_name("TaskA3.1_Final.py")
-    spec = importlib.util.spec_from_file_location("task_a3_1_dijkstra", module_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Unable to load Dijkstra planner from {module_path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
 def score_route(rx, ry, fc_x, fc_y, tc_x, tc_y, resolution=1.0):
     """Score any returned route with the same midpoint-sampled surcharge model."""
     if len(rx) < 2:
@@ -347,7 +572,7 @@ def calculate_scenario1_cost(route_cost):
 
 
 def main():
-    global show_animation
+    global show_animation, JET_STREAM_FACTOR, JET_STREAM_Y_MIN
 
     print("=" * 72)
     print("A* vs Dijkstra vs RRT* — shared-map path planning comparison")
@@ -539,18 +764,15 @@ def main():
     plt.show(block=False)
     plt.pause(0.1)
 
-    dijkstra_module = load_dijkstra_module()
-    astar_module.JET_STREAM_FACTOR = 1.0
-    astar_module.JET_STREAM_Y_MIN = 5.0
-    astar_module.show_animation = False
-    dijkstra_module.show_animation = False
+    JET_STREAM_FACTOR = 1.0
+    JET_STREAM_Y_MIN = 5.0
     show_animation = False
 
     planners = (
-        ("A*", 0, lambda: astar_module.AStarPlanner(
+        ("A*", 0, lambda: AStarPlanner(
             ox, oy, grid_size, robot_radius, fc_x, fc_y, tc_x, tc_y
         )),
-        ("Dijkstra", 1, lambda: dijkstra_module.DijkstraPlanner(
+        ("Dijkstra", 1, lambda: DijkstraPlanner(
             ox, oy, grid_size, robot_radius, fc_x, fc_y, tc_x, tc_y
         )),
         ("RRT*", 2, lambda: RRTStarPlanner(
