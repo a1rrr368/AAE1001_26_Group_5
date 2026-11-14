@@ -318,9 +318,13 @@ For Task A3, I completed the Dijkstra and RRT* implementations and compared them
 </details>
 
 <details>
-<summary><strong>Member 7</strong></summary>
+<summary><strong>LOI Chi Wun</strong></summary>
 
-<!-- 把 Member 7 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+For our AAE1001 group project, I focused on the testing, map analysis, and presentation slides for Task A1 (Adding a Checkpoint).
+
+I ran different test runs to make sure everything worked properly against the task rules. I checked that the checkpoints are actually generated inside both cost-intensive areas and that the aircraft reaches both spots before flying back to base. Because there are two different orders the aircraft can take to visit the drop-off points, I ran simulations for both sequences and saved the two output maps. Putting the two plots side by side made it really clear how the visiting order changed the flight path and total distance. I also double-checked that the checkpoints and paths showed up clearly on the graphs.
+
+After collecting the test outputs, I designed and finalized the Task A1 section of our group presentation slides so we could communicate our findings clearly. Working closely on the testing and visualization side gave me a much stronger grasp of how path-planning algorithms behave under different conditions, as well as how changes in visiting order impact the final trajectory. Overall, it gave me solid practical experience coordinating with my teammates remotely on GitHub and turning technical test results into structured visuals that anyone could understand.
 
 </details>
 
