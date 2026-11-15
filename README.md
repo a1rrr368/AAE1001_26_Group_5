@@ -221,7 +221,7 @@ For the numerical checks documented here, plotting was disabled; no new route im
 | Justin | 24082728D | Revised the draft code of Task 1 to clear out some errors, completed Task A2 with the help of ChatGPT and made the presentation slides for the task. |
 |CHEN Lingxi|26107016D| I completed and clarify the Task 2 ,completed the 2 algrothism of Task A3.I also helped to clearify the design of our aircraft in Task3
 | LOI Chi Wun | 26121716D | I ran the tests for Task A1, gathered two maps with both visiting orders, and finished the presentation slides for Task A1. |
-| Member 7 | — | — |
+| Cai Xintong Michelle | 26138185D | Prepared the Task 2 PowerPoint slides and organized the comparison of flight time and operating costs before and after introducing the jet stream. Calculated and presented cost savings and percentage reductions for the aircraft options. |
 | Member 8 | — | — |
 
 ## References
@@ -329,9 +329,13 @@ After collecting the test outputs, I designed and finalized the Task A1 section 
 </details>
 
 <details>
-<summary><strong>Member 8</strong></summary>
+<summary><strong>Cai Xintong Michelle</strong></summary>
 
-<!-- 把 Member 8 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
+For Task 2, I focused on comparing the baseline results with the results obtained after adding the jet stream to the A* path-planning model. I examined the flight times and total operating costs of different aircraft, including the A321neo, A330-900neo, and A350-900. I also calculated the cost savings and percentage reductions to demonstrate how the jet stream could improve operational efficiency. Through this comparison, I gained a better understanding of how changes in flight conditions can influence route planning and aircraft operating costs.
+
+One challenge I encountered was ensuring that the figures presented in the slides were consistent with the Python program's actual outputs. I learned the importance of checking calculations carefully and distinguishing between estimated values and verified results. I also worked on presenting the numerical comparisons in clear tables so that the audience could easily understand the differences.
+
+Overall, this project improved my data analysis, problem-solving, and presentation skills. It also helped me understand the importance of teamwork and effective communication when combining programming results with technical explanations. In future projects, I would pay more attention to verifying data at an earlier stage and presenting technical findings more efficiently.
 
 </details>
 
