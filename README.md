@@ -221,7 +221,7 @@ For the numerical checks documented here, plotting was disabled; no new route im
 | Justin | 24082728D | Revised the draft code of Task 1 to clear out some errors, completed Task A2 with the help of ChatGPT and made the presentation slides for the task. |
 |CHEN Lingxi|26107016D| I completed and clarify the Task 2 ,completed the 2 algrothism of Task A3.I also helped to clearify the design of our aircraft in Task3
 | LOI Chi Wun | 26121716D | I ran the tests for Task A1, gathered two maps with both visiting orders, and finished the presentation slides for Task A1. |
-| Cai Xintong Michelle | 26138185D | Prepared the Task 2 PowerPoint slides and organized the comparison of flight time and operating costs before and after introducing the jet stream. Calculated and presented cost savings and percentage reductions for the aircraft options. |
+| Cai Xintong Michelle | 26138185D | I completed Task 2 slides and organized the comparison of flight time and operating costs before and after introducing the jet stream. Calculated and presented cost savings and percentage reductions for the aircraft options. |
 | Member 8 | — | — |
 
 ## References
