@@ -39,9 +39,9 @@ Group 5 studies aircraft routing and operating costs through six tasks.
 
 A* searches an eight-direction grid from (5, 40) to (20, 30). The route avoids obstacles and accounts for the 15% and 30% cost increases in the two designated regions. For each passenger scenario, the aircraft comparison screens out options that exceed the flight limit and ranks the remaining options by total operating cost.
 
-<!-- 这里放 Task 1 路线图。下面先用了仓库已有的旧路线图。用正式脚本重新出图后，把新图放进仓库并替换路径。图上标出起终点、障碍和两个成本区。 -->
+![A* route from (5, 40) to (20, 30), with obstacles and the two cost regions](./Figure1_Task1.png)
 
-![Original Task 1 route](./Original%20Task%201%20Path)
+*Task 1 baseline route without a jet stream.*
 
 <!-- 从正式输出填入三个场景的最终结果。总成本是整个场景的费用。表后用一句话说明胜出机型，并列出超出班次上限的机型。 -->
 
@@ -53,34 +53,35 @@ A* searches an eight-direction grid from (5, 40) to (20, 30). The route avoids o
 | 2 | 1,500 | 7 | 0.96 | A330-900neo | 5 | 41,639.42 |
 | 3 | 2,250 | 25 | 0.78 | A330-900neo | 8 | 53,868.54 |
 
-The current `Task 1_Final` returns a weighted route time of **58.7875 minutes**. A330-900neo has the lowest total cost in all three scenarios. A321neo requires 17 flights in Scenario 1 and 8 flights in Scenario 2, exceeding the respective limits; all three aircraft are feasible in Scenario 3.
+The current `Task1_Final.py` returns a weighted route time of **58.7875 minutes**. A330-900neo has the lowest total cost in all three scenarios. A321neo requires 17 flights in Scenario 1 and 8 flights in Scenario 2, exceeding the respective limits; all three aircraft are feasible in Scenario 3.
+
+[View the Task 1 terminal output for all three scenarios](./Figure2_Task1%20Terminal%20Output.png).
 
 The calculation uses `N = ceil(passengers / capacity)` and `total_cost = N * (fuel_price * fuel_rate * T_best + C_T * T_best + C_c)`. Totals use the unrounded route time and are rounded only for display.
 
-**Current implementation assumptions:** cardinal moves cost 1 and diagonal moves cost `sqrt(2)`. Entering the fuel/time regions adds 15%/30% to the same weighted route cost, which is then used as `T_best` for both fuel and time charges. These are results of the current code. The lecture specifies 2 minutes for diagonal moves; this difference, and the treatment of fuel penalties as weighted time, should be resolved before claiming full compliance. The route image above is retained as the original reference image and has not been regenerated for this update.
+**Current implementation assumptions:** cardinal moves cost 1 and diagonal moves cost `sqrt(2)`. Entering the fuel/time regions adds 15%/30% to the same weighted route cost, which is then used as `T_best` for both fuel and time charges. These are results of the current code. The lecture specifies 2 minutes for diagonal moves; this difference, and the treatment of fuel penalties as weighted time, should be resolved before claiming full compliance.
 
 ## Task 2
 
 ### Jet Stream Placement
 
-The model adds a horizontal jet stream that spans the map and is five units high. The current script sets its lower boundary to y = 5 and reduces the base movement cost in the band by 5%. The comparison uses Scenario 1.
+[Task2_Modified.py](./Task2_Modified.py) tests all 66 integer lower boundaries from `y = -10` to `y = 55` for a horizontal jet stream five units high. For each placement, it runs A* on the Group 5 map and estimates Scenario 1 operating cost for 11 A330-900neo flights. The jet stream reduces the base cost of a move by 5% when its destination cell lies within the band. The fuel and time surcharges are added separately.
 
-<!-- 下面已插入仓库现有的 Task 2 图。如果 PPT 用了另一张图，把原图放进仓库并改路径。若直接粘贴图片失败，可先存为 PNG，再用 ![图片英文说明](./文件名.png) 引用。 -->
-
-![Task 2 route with the jet stream](./Task%202%20path.png)
-
-<!-- 这里填无气流、y = 5 和其他实际测试位置。填好后用一两句说明哪个测试位置成本最低，以及比无气流省多少。 -->
-
-<!-- UPDATE T2: baseline comparison using Task 1_Final and Task 2_Final. | README line 74. -->
-
-| Jet stream placement | Route time (min) | Scenario 1 total cost ($) |
+| Jet stream placement | Weighted route time (min) | Scenario 1 total cost ($) |
 |---|---:|---:|
-| No jet stream | 58.7875 | 81,751.58 |
-| Lower boundary y = 5 | 58.5960 | 81,557.02 |
+| No jet stream (Task 1 baseline) | 58.7875 | 81,751.58 |
+| Lower boundary `y = 5` (band `[5, 10]`) | 58.5960 | 81,557.02 |
+| **Selected lower boundary `y = 10` (band `[10, 15]`)** | **57.9804** | **80,931.24** |
 
-Both rows select **11 A330-900neo flights**. The tested jet stream saves approximately **$194.56 (0.238%)**, using `(baseline - jet_stream_cost) / baseline * 100`. The 5% reduction applies to base movement cost inside the band, rather than to the entire trip or fixed costs. Regional surcharges remain additive in the current implementation.
+The integer lower boundaries from **10 through 20** tie for the lowest cost found. The script uses the first tied placement, `y = 10`, for the route plot. It saves approximately **$820.34 (1.00%)** relative to the no-jet-stream baseline. The sweep covers the integer placements in the script. Since A* still uses an unscaled distance heuristic with discounted moves, these results describe the best route and placement the implementation found.
 
-Only the current lower boundary `y = 5` has been verified here; it is not established as the best placement over all possible positions. The current A* heuristic remains unscaled despite discounted edges, so global optimality of the discounted search has not been established. The existing image is retained as a reference and has not been regenerated.
+Running the script opens two figures: Scenario 1 cost by lower boundary and the route for the selected band.
+
+![Task 2 route with the selected jet-stream band from y = 10 to y = 15](./Figure3_Task2.png)
+
+*Task 2 route at the first minimum-cost placement in the sweep.*
+
+<!-- 如需补充气流带位置与成本的曲线图，请从 Task2_Modified.py 保存新图，再用仓库相对路径插入。Figure7 是旧运行截图，数值与目前的结果不同。 -->
 
 ## Task 3
 
@@ -88,9 +89,9 @@ Only the current lower boundary `y = 5` has been verified here; it is not establ
 
 The design must carry 3,300 passengers in at most 13 flights. Candidate capacities range from 100 to 450 seats in steps of 50. Capacities below 300 seats use two engines, and capacities from 300 seats onward use four. The model compares fuel, time, and fixed costs.
 
-<!-- 用 Task 3_Final 核对各座位档位。填每班三类费用与总成本，在表下写最终机名、座位数、发动机数和班次，并说明为什么选它。 -->
+<!-- 用 Task3_Final.py 核对各座位档位。填每班三类费用与总成本，在表下写最终机名、座位数、发动机数和班次，并说明为什么选它。 -->
 
-<!-- UPDATE T3: cost breakdown verified against Task 3_Final; comparison with Task 1 baseline. | README line 93. -->
+<!-- UPDATE T3: cost breakdown verified against Task3_Final.py; comparison with Task 1 baseline. | README line 93. -->
 
 | Seats | Flights required | Engines | Fuel per flight ($) | Time per flight ($) | Fixed per flight ($) | Total cost ($) |
 |---:|---:|---:|---:|---:|---:|---:|
@@ -114,8 +115,6 @@ Compared with the 300-seat candidate, the selected design saves **$20,198.10 (23
 
 The planner generates one checkpoint in each cost region. It compares the two possible visit orders and selects the reachable order with the lower weighted travel time.
 
-<!-- 这里写随机种子、两个补给点坐标、两种顺序的用时及最终顺序。把生成的路线图放进仓库，再在这里插入 ![Route through both checkpoints](./figures/task-a1.png)。路径按实际文件名改。 -->
-
 <!-- UPDATE A1: reproducible checkpoint results and existing output options. | README line 119. -->
 
 With the default `--seed 5`, the fuel checkpoint is **(7, 6)** and the time checkpoint is **(59, 1)**.
@@ -125,7 +124,11 @@ With the default `--seed 5`, the fuel checkpoint is **(7, 6)** and the time chec
 | Start -> Fuel -> Time -> Base | **148.2168** |
 | Start -> Time -> Fuel -> Base | 178.0319 |
 
-The selected order visits Fuel first and Time second, reducing weighted time by **29.8151 minutes** relative to the other order. The script checks that both checkpoints are visited and that the base is not reached earlier. By default it saves `A1_results/A1_route.png` and `A1_results/A1_route.txt`; `--output` changes the output path. The generated figure has not been uploaded in this README update.
+The selected order visits Fuel first and Time second, reducing weighted time by **29.8151 minutes** relative to the other order. The script checks that both checkpoints are visited and that the base is not reached earlier. By default it saves `A1_results/A1_route.png` and `A1_results/A1_route.txt`; `--output` changes the output path.
+
+![Route from the start through fuel checkpoint (7, 6) and time checkpoint (59, 1) to the base](./Figure4_TaskA1.png)
+
+*Task A1 with seed 5: fuel checkpoint first, then time checkpoint, for a total weighted time of 148.2168 minutes.*
 
 ## Task A2
 
@@ -133,7 +136,9 @@ The selected order visits Fuel first and Time second, reducing weighted time by 
 
 The program generates a 40 × 40 fuel-cost region, random obstacles, and endpoints at least 40 units apart. The planner moves in four directions.
 
-<!-- 这里放一张实际生成的地图和路线，例如 ![Random map and planned route](./figures/task-a2.png)。图下写起终点距离、障碍密度、路径代价和随机设置。 -->
+![Four-direction route through a random obstacle field with a 40 by 40 fuel-cost region](./Figure5_TaskA2.png)
+
+*Task A2 route from a separate run. The seed 5 example below uses different start and goal positions.*
 
 <!-- UPDATE A2: code parameters and a seeded verification example. | README line 138. -->
 
@@ -148,64 +153,62 @@ The script does not set a random seed. For a reproducible verification example, 
 | Sampled start-goal distance | 50.7 units |
 | Weighted route cost | 98.00 |
 
-These values describe the seeded example, not every ordinary run. No example figure has been uploaded. The current no-path branch breaks out of the search and still reconstructs a goal-only path; failure handling should be corrected before using it to measure success rates.
+These values describe the seeded example, not every ordinary run. The current no-path branch breaks out of the search and still reconstructs a goal-only path; failure handling should be corrected before using it to measure success rates.
 
 ## Task A3
 
 ### A*, Dijkstra, and RRT*
 
-<!-- 用同一张地图和相同的起终点比较。填写同一成本口径下的结果，并记录 RRT* 的种子和迭代数。有对比图就放在表后，例如 ![Routes found by the three planners](./figures/task-a3.png)。 -->
+[TaskA3_Compare_Modified.py](./TaskA3_Compare_Modified.py) runs A*, Dijkstra and RRT* with the same obstacles, cost regions, start **(5, 40)** and goal **(20, 30)**. The jet-stream discount is disabled for this comparison. The figure shows the search progress and final route for each algorithm, alongside charts for elapsed time, shared route score and estimated Scenario 1 operating cost.
 
-<!-- UPDATE A3: verified route costs; search-only timing from one headless run. | README line 159. -->
+The planners use their own cost calculations during search. After each search, the script samples the returned route in segments of at most half a grid unit and applies the same regional surcharges for all three planners. It then uses that shared score to estimate Scenario 1 operating cost and select the lowest-cost aircraft within the flight limit.
 
-| Algorithm | Route cost | Runtime (s) | Notes |
-|---|---:|---:|---|
-| A* | 58.7875 | 0.1263 | Eight-direction grid; Euclidean heuristic |
-| Dijkstra | 58.7875 | 0.1889 | Same grid and edge costs as A* |
-| RRT* | 59.7257 | 5.5532 | Continuous segments; seed 0; 5,000 iterations |
+| Algorithm | Shared route score (weighted min) | Path length (map units) | Scenario 1 total cost ($) |
+|---|---:|---:|---:|
+| A* | 58.7875 | 58.21 | 81,751.58 |
+| Dijkstra | 58.7875 | 58.21 | 81,751.58 |
+| RRT* (seed 0, 5,000 iterations) | 59.7257 | 58.69 | 82,705.17 |
 
-All three use the Group 5 map, start **(5, 40)** and goal **(20, 30)**. Timings above are single-run, animation-disabled measurements of `planning()` only; obstacle-map construction, plotting and aircraft-cost calculations are excluded. They are environment-dependent observations, not repeated benchmark averages.
+All three routes select **11 A330-900neo flights**. A* and Dijkstra tie on the shared score in this run. A* expanded 1,331 grid points compared with 2,904 for Dijkstra. The RRT* route was longer and scored higher in this run. Its result depends on the random seed and iteration budget. The figure's elapsed time includes time spent refreshing the plot during search and can vary by machine.
 
-A* and Dijkstra return the same route cost on the shared grid. The tested RRT* run returns a higher native cost. RRT* uses continuous segments with midpoint-sampled regional penalties, whereas the grid algorithms apply penalties at destination cells, so its native cost is not an exactly identical evaluation metric. A shared path evaluator and multiple RRT* seeds are needed for a controlled quality comparison. Default RRT* settings are step size 3, goal sample rate 0.1, maximum 5,000 iterations and seed 0.
+![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./Figure6_TaskA3%20Compare.png)
+
+*Task A3 comparison on the same obstacle map. The elapsed times shown are from the run captured in the figure.*
 
 ## How to Run
 
-<!-- 这里给组员或老师复现。提交前核对 Python 版本、依赖、文件名和命令。若脚本改名，同时更新这里的链接。 -->
+<!-- 提交前核对依赖、文件名和命令。若脚本改名，同时更新本节和 References。 -->
 
-<!-- UPDATE RUN: dependency installation, script behaviour and reproducibility commands. | README line 175. -->
-
-Run the scripts from the repository root with Python 3 and Matplotlib installed. The Task 1, Task 2 and A3 scripts import `MatplotlibDeprecationWarning` directly from Matplotlib; their source headers target Matplotlib 3.10+. No exact package version is pinned in the repository.
+Run the scripts from the repository root with Python 3. Install Matplotlib and NumPy:
 
 ```bash
-python -m pip install "matplotlib>=3.10"
+python -m pip install "matplotlib>=3.10" numpy
 ```
-
-The source files without a `.py` extension can still be run using the quoted filenames below.
 
 | Task | Source file | Command |
 |---|---|---|
-| 1 | [Task1_Final.py](./Task%201_Final) | `python "Task 1_Final"` |
-| 2 | [Task2_Final.py](./Task%202_Final) | `python "Task 2_Final"` |
-| 3 | [Task3_Final.py](./Task%203_Final) | `python "Task 3_Final"` |
-| A1 | [TaskA1_Final.py](./Task%20A1_Final) | `python "Task A1_Final" --no-show` |
-| A2 | [TaskA2_Final.py](./Task%20A2_Final) | `python "Task A2_Final"` |
-| A3 | [Dijkstra](./Task%20A3.1_Final) and [RRT*](./Task%20A3.2_Final) | `python "TaskA3.1_Final.py"` and `python "TaskA3.2_Final.py"` |
+| 1 | [Task1_Final.py](./Task1_Final.py) | `python Task1_Final.py` |
+| 2 | [Task2_Modified.py](./Task2_Modified.py) | `python Task2_Modified.py` |
+| 3 | [Task3_Final.py](./Task3_Final.py) | `python Task3_Final.py` |
+| A1 | [TaskA1_Final.py](./TaskA1_Final.py) | `python TaskA1_Final.py --no-show` |
+| A2 | [TaskA2_Final.py](./TaskA2_Final.py) | `python TaskA2_Final.py` |
+| A3 | [TaskA3_Compare_Modified.py](./TaskA3_Compare_Modified.py) | `python TaskA3_Compare_Modified.py` |
 
-Task 1, Task 2, A2 and A3 display plots by default. Set their existing `show_animation` variable to `False` when collecting numerical results or timings. Task 3 repeatedly asks for a capacity; use 300, 350, 400 or 450 for feasible designs and press Ctrl+C to stop. Its current code does not handle non-integer input or zero safely.
+Task 2 shows the sweep table in the terminal and opens two plots. Close both plots to see the final aircraft cost breakdown. For the A3 comparison, wait for `Comparison complete` in the terminal, then close the figure to exit. To run the A3 planners individually, use `python TaskA3.1_Final.py` for Dijkstra or `python TaskA3.2_Final.py` for RRT*.
+
+Task 3 repeatedly asks for a capacity. Use 300, 350, 400 or 450 for feasible designs and press Ctrl+C to stop.
 
 For Task A1, use the existing command-line options:
 
 ```bash
-python "Task A1_Final" --seed 5 --no-show --output A1_results/A1_route.png
+python TaskA1_Final.py --seed 5 --no-show --output A1_results/A1_route.png
 ```
 
 To reproduce the A2 seeded example without changing its source:
 
 ```bash
-python -c 'import random, runpy; random.seed(5); runpy.run_path("Task A2_Final", run_name="__main__")'
+python -c 'import random, runpy; random.seed(5); runpy.run_path("TaskA2_Final.py", run_name="__main__")'
 ```
-
-For the numerical checks documented here, plotting was disabled; no new route images were generated or uploaded.
 
 ## Team Members and Contributions
 
@@ -232,17 +235,16 @@ For the numerical checks documented here, plotting was disabled; no new route im
 
 <!-- UPDATE SOURCES: direct implementation links; external algorithm provenance still to be supplied by authors. | README line 233. -->
 
-The numerical tables above were checked against these repository implementations:
+Project implementations:
 
-- [Task 1: A* and scenario costs](./Task%201_Final)
-- [Task 2: jet stream](./Task%202_Final)
-- [Task 3: aircraft capacity and costs](./Task%203_Final)
-- [Task A1: checkpoint orders](./Task%20A1_Final)
-- [Task A2: random environment](./Task%20A2_Final)
-- [Task A3.1: Dijkstra](./Task%20A3.1_Final)
-- [Task A3.2: RRT*](./Task%20A3.2_Final)
-
-These links identify the code used for verification. Any external Dijkstra/RRT* sources actually adapted by the authors, and any external image credits, still need to be added; provenance has not been inferred from algorithm names.
+- [Task 1: A* and scenario costs](./Task1_Final.py)
+- [Task 2: jet-stream placement sweep](./Task2_Modified.py)
+- [Task 3: aircraft capacity and costs](./Task3_Final.py)
+- [Task A1: checkpoint orders](./TaskA1_Final.py)
+- [Task A2: random environment](./TaskA2_Final.py)
+- [Task A3: three-planner comparison](./TaskA3_Compare_Modified.py)
+- [Task A3.1: Dijkstra](./TaskA3.1_Final.py)
+- [Task A3.2: RRT*](./TaskA3.2_Final.py)
 
 ## Individual Reflections
 
