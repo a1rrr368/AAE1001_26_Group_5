@@ -164,16 +164,39 @@ These values describe the seeded example, not every ordinary run. The current no
 
 The planners use their own cost calculations during search. After each search, the script samples the returned route in segments of at most half a grid unit and applies the same regional surcharges for all three planners. It then uses that shared score to estimate Scenario 1 operating cost and select the lowest-cost aircraft within the flight limit.
 
-| Algorithm | Shared route score (weighted min) | Path length (map units) | Scenario 1 total cost ($) |
-|---|---:|---:|---:|
-| A* | 58.7875 | 58.21 | 81,751.58 |
-| Dijkstra | 58.7875 | 58.21 | 81,751.58 |
-| RRT* (seed 0, 5,000 iterations) | 59.7257 | 58.69 | 82,705.17 |
+| Algorithm | Elapsed time (s) | Shared route score (weighted min) | Path length (map units) | Scenario 1 total cost ($) |
+|---|---:|---:|---:|---:|
+| A* | 5.04 | 58.79 | 58.2 | 81,752 |
+| Dijkstra | 5.84 | 58.79 | 58.2 | 81,752 |
+| RRT* (seed 0, 5,000 iterations) | 10.21 | 58.79 | 58.2 | 81,752 |
 
-All three routes select **11 A330-900neo flights**. A* and Dijkstra tie on the shared score in this run. A* expanded 1,331 grid points compared with 2,904 for Dijkstra. The RRT* route was longer and scored higher in this run. Its result depends on the random seed and iteration budget. The figure's elapsed time includes time spent refreshing the plot during search and can vary by machine.
+In the run shown, all three routes have the same displayed shared score and length, and each selects **11 A330-900neo flights**. The displayed times include refreshing the plot during search, so they can vary by machine.
 
 ![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3_result.png)
 *Task A3 comparison on the same obstacle map. The elapsed times shown are from the run captured in the figure.*
+
+### Additional A3: Tailored-Scene Comparison
+
+The previous comparison evaluates A*, Dijkstra and RRT* on the same original map. However it can't comprehensively compare their advantages and disadvantafes. This additional experiment uses a tailored scene to compare their routes and costs under a different obstacle layout. The start is **(2, 10)** and the goal is **(28, 10)**. A vertical wall at `x = 15` leaves a narrow passage around `y = 9–11`. The scene also includes a jet stream, a fuel-cost region and a time-cost region.
+
+The additional script, [`taskA3_additional`](./taskA3_additional), imports the planner implementations from [`TaskA3_compare_modifed.py`](./TaskA3_compare_modifed.py). Keep both files in the same directory, then run the script from that directory with:
+
+```bash
+python taskA3_additional
+
+![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3_additional_result_graph1.png)
+*Task A3 comparison on the the tailered map. The elapsed times shown are from the run captured in the figure.*
+
+The shared route score applies the fuel and time region surcharges to each returned route. The current shared scoring function does not include the jet-stream discount; A* does use that discount during its search.
+
+| Algorithm | Elapsed time (s) | Shared route score (weighted min) | Path length (map units) | Scenario 1 total cost ($) |
+|---|---:|---:|---:|---:|
+| A* | 0.92 | 33.1260 | 32.4853 | 55,669.23 |
+| Dijkstra | 3.02 | 29.9784 | 26.8284 | 52,470.07 |
+| RRT* (seed 0, 5,000 iterations) | 1,214.37 | 29.9698 | 26.8284 | 52,461.35 |
+
+In this run, RRT* finds the shortest way with a much longer time,while Dijkstra find a similar way in much shorter time. A* finds a longer way than them, but with the shortest time. This test illustrate that RRT* is suitable for finding the shortest way in a complex and dynamic scenario, but it also requires higher  computational power.Dijkstra perfers best comprehensively in this scenario,since it find a way with acceptable tolerance and use much shorter time. And A* may not be suitable for finding the perfect shortest way in such a complex scenario.
+
 
 ## How to Run
 
