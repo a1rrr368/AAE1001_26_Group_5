@@ -312,101 +312,43 @@ class RRTStarPlanner:
             print("Start or goal is occupied – no path found")
             return [], [], None
 
-        # REVIEW 2: Reuse the map-size factor; preserve operation order and rounding.
         radius_factor = 2.0 * math.sqrt(self.x_width * self.y_width / math.pi)
-        nodes = [start]
-        children = [[]]
-        goal_index = None
+        trees = [[start], [goal]]
+        children = [[[]], [[]]]
+        connections = set()
+
         for iteration in range(self.max_iter):
+            active_tree = iteration % 2
+            other_tree = 1 - active_tree
+            target = trees[other_tree][0]
             if self.rng.random() < self.goal_sample_rate:
-                sample = goal
+                sample = self.Node(target.x, target.y)
             else:
                 sample = self.Node(
                     self.rng.uniform(0, self.x_width - 1),
                     self.rng.uniform(0, self.y_width - 1),
                 )
 
-            nearest_index = min(
-                range(len(nodes)),
-                key=lambda i: self.distance(nodes[i], sample),
+            extended = self._extend_tree(
+                trees[active_tree], children[active_tree], sample, radius_factor
             )
-            nearest = nodes[nearest_index]
-            distance = self.distance(nearest, sample)
-            if distance == 0:
+            if extended is None:
                 continue
-
-            scale = min(self.step_size, distance) / distance
-            new_node = self.Node(
-                nearest.x + (sample.x - nearest.x) * scale,
-                nearest.y + (sample.y - nearest.y) * scale,
-            )
-            if not self.is_collision_free(nearest, new_node):
-                continue
-
-            radius = min(
-                self.step_size,
-                radius_factor * math.sqrt(math.log(len(nodes) + 1) / (len(nodes) + 1)),
-            )
-            near_indices = [
-                i for i, node in enumerate(nodes)
-                if self.distance(node, new_node) <= radius
-            ]
-            if nearest_index not in near_indices:
-                near_indices.append(nearest_index)
-
-            parent_index = nearest_index
-            new_node.cost = nearest.cost + self.segment_cost(nearest, new_node)
-            for candidate_index in near_indices:
-                candidate = nodes[candidate_index]
-                if not self.is_collision_free(candidate, new_node):
-                    continue
-                candidate_cost = candidate.cost + self.segment_cost(candidate, new_node)
-                if candidate_cost < new_node.cost:
-                    parent_index = candidate_index
-                    new_node.cost = candidate_cost
-
-            new_node.parent_index = parent_index
-            nodes.append(new_node)
-            children.append([])
-            new_index = len(nodes) - 1
-            children[parent_index].append(new_index)
-
-            for neighbor_index in near_indices:
-                neighbor = nodes[neighbor_index]
-                if neighbor_index == parent_index or self.is_ancestor(
-                        nodes, neighbor_index, new_index):
-                    continue
-                if not self.is_collision_free(new_node, neighbor):
-                    continue
-                rewired_cost = new_node.cost + self.segment_cost(new_node, neighbor)
-                if rewired_cost < neighbor.cost:
-                    children[neighbor.parent_index].remove(neighbor_index)
-                    neighbor.parent_index = new_index
-                    neighbor.cost = rewired_cost
-                    children[new_index].append(neighbor_index)
-                    self.update_descendant_costs(nodes, children, neighbor_index)
-
-            if goal_index is None and self.distance(new_node, goal) <= self.step_size \
-                    and self.is_collision_free(new_node, goal):
-                goal.parent_index = new_index
-                goal.cost = new_node.cost + self.segment_cost(new_node, goal)
-                nodes.append(goal)
-                children.append([])
-                goal_index = len(nodes) - 1
-                children[new_index].append(goal_index)
+            new_index, parent_index = extended
+            new_node = trees[active_tree][new_index]
+            parent = trees[active_tree][parent_index]
 
             if show_animation:
                 plt.plot(
-                    [self.calc_grid_position(nearest.x, self.min_x),
+                    [self.calc_grid_position(parent.x, self.min_x),
                      self.calc_grid_position(new_node.x, self.min_x)],
-                    [self.calc_grid_position(nearest.y, self.min_y),
+                    [self.calc_grid_position(parent.y, self.min_y),
                      self.calc_grid_position(new_node.y, self.min_y)],
                     "-c", linewidth=0.5,
                 )
                 if iteration % 20 == 0:
                     plt.pause(0.001)
             if progress_callback is not None:
-                parent = nodes[new_node.parent_index]
                 progress_callback(
                     self.calc_grid_position(parent.x, self.min_x),
                     self.calc_grid_position(parent.y, self.min_y),
@@ -414,15 +356,184 @@ class RRTStarPlanner:
                     self.calc_grid_position(new_node.y, self.min_y),
                 )
 
-        if goal_index is None:
+            for other_index, other_node in enumerate(trees[other_tree]):
+                if self.distance(new_node, other_node) > self.step_size:
+                    continue
+                if self.is_collision_free(new_node, other_node):
+                    if active_tree == 0:
+                        connections.add((new_index, other_index))
+                    else:
+                        connections.add((other_index, new_index))
+
+        if not connections:
             print(f"RRT* reached its iteration limit ({self.max_iter}) – no path found")
             return [], [], None
 
-        goal_node = nodes[goal_index]
-        print(f"\n>>> RRT* best trip time after {self.max_iter} iterations "
-              f"(T_best) = {goal_node.cost:.4f} minutes")
-        rx, ry = self.calc_final_path(nodes, goal_index)
-        return rx, ry, goal_node.cost
+        start_index, goal_index = min(
+            connections,
+            key=lambda pair: (
+                trees[0][pair[0]].cost
+                + self.segment_cost(trees[0][pair[0]], trees[1][pair[1]])
+                + trees[1][pair[1]].cost
+            ),
+        )
+        start_path = self._trace_path(trees[0], start_index)
+        start_path.reverse()
+        goal_path = self._trace_path(trees[1], goal_index)
+        candidate_path = self._shortcut_path(start_path + goal_path)
+        candidate_cost = sum(
+            self.segment_cost(
+                self.Node(*candidate_path[i]),
+                self.Node(*candidate_path[i + 1]),
+            )
+            for i in range(len(candidate_path) - 1)
+        )
+        path, route_cost = self._optimize_eight_direction_path(start, goal)
+        if route_cost is None:
+            print("No collision-free 8-direction route found")
+            return [], [], None
+        print(f"\n>>> RRT* free-angle candidate cost = {candidate_cost:.4f} minutes")
+        print(f">>> Best 8-direction route after refinement "
+              f"(T_best) = {route_cost:.4f} minutes")
+        path.reverse()
+        rx = [self.calc_grid_position(x, self.min_x) for x, _ in path]
+        ry = [self.calc_grid_position(y, self.min_y) for _, y in path]
+        return rx, ry, route_cost
+
+    @staticmethod
+    def _trace_path(nodes, index):
+        path = []
+        while index != -1:
+            node = nodes[index]
+            path.append((node.x, node.y))
+            index = node.parent_index
+        return path
+
+    def _extend_tree(self, nodes, children, sample, radius_factor):
+        nearest_index = min(
+            range(len(nodes)),
+            key=lambda index: self.distance(nodes[index], sample),
+        )
+        nearest = nodes[nearest_index]
+        distance = self.distance(nearest, sample)
+        if distance == 0:
+            return None
+
+        scale = min(self.step_size, distance) / distance
+        new_node = self.Node(
+            nearest.x + (sample.x - nearest.x) * scale,
+            nearest.y + (sample.y - nearest.y) * scale,
+        )
+        if not self.is_collision_free(nearest, new_node):
+            return None
+
+        radius = min(
+            self.step_size,
+            radius_factor * math.sqrt(math.log(len(nodes) + 1) / (len(nodes) + 1)),
+        )
+        near_indices = [
+            index for index, node in enumerate(nodes)
+            if self.distance(node, new_node) <= radius
+        ]
+        if nearest_index not in near_indices:
+            near_indices.append(nearest_index)
+
+        parent_index = nearest_index
+        new_node.cost = nearest.cost + self.segment_cost(nearest, new_node)
+        for candidate_index in near_indices:
+            candidate = nodes[candidate_index]
+            if not self.is_collision_free(candidate, new_node):
+                continue
+            candidate_cost = candidate.cost + self.segment_cost(candidate, new_node)
+            if candidate_cost < new_node.cost:
+                parent_index = candidate_index
+                new_node.cost = candidate_cost
+
+        new_node.parent_index = parent_index
+        nodes.append(new_node)
+        children.append([])
+        new_index = len(nodes) - 1
+        children[parent_index].append(new_index)
+
+        for neighbor_index in near_indices:
+            neighbor = nodes[neighbor_index]
+            if neighbor_index == parent_index or self.is_ancestor(
+                    nodes, neighbor_index, new_index):
+                continue
+            if not self.is_collision_free(new_node, neighbor):
+                continue
+            rewired_cost = new_node.cost + self.segment_cost(new_node, neighbor)
+            if rewired_cost < neighbor.cost:
+                children[neighbor.parent_index].remove(neighbor_index)
+                neighbor.parent_index = new_index
+                neighbor.cost = rewired_cost
+                children[new_index].append(neighbor_index)
+                self.update_descendant_costs(nodes, children, neighbor_index)
+
+        return new_index, parent_index
+
+    def _shortcut_path(self, path, attempts=100):
+        for _ in range(attempts):
+            if len(path) < 3:
+                break
+            first, last = sorted(self.rng.sample(range(len(path)), 2))
+            if last - first < 2:
+                continue
+
+            start = self.Node(*path[first])
+            end = self.Node(*path[last])
+            if not self.is_collision_free(start, end):
+                continue
+
+            old_cost = sum(
+                self.segment_cost(self.Node(*path[index]),
+                                  self.Node(*path[index + 1]))
+                for index in range(first, last)
+            )
+            if self.segment_cost(start, end) <= old_cost:
+                path = path[:first + 1] + path[last:]
+        return path
+
+    def _optimize_eight_direction_path(self, start, goal):
+        # RRT* explores continuously; this A* pass finds the cheapest valid 8-way route.
+        start_key = (int(start.x), int(start.y))
+        goal_key = (int(goal.x), int(goal.y))
+        best_cost = {start_key: 0.0}
+        parent = {}
+        queue = [(self.distance(start, goal) * self.costPerGrid, 0.0, start_key)]
+
+        while queue:
+            _, queued_cost, current_key = heapq.heappop(queue)
+            if queued_cost != best_cost.get(current_key):
+                continue
+            if current_key == goal_key:
+                path = [goal_key]
+                while path[-1] != start_key:
+                    path.append(parent[path[-1]])
+                path.reverse()
+                return path, queued_cost
+
+            current = self.Node(*current_key)
+            for dx, dy, _ in AStarPlanner.get_motion_model():
+                neighbor_key = (current_key[0] + dx, current_key[1] + dy)
+                neighbor = self.Node(*neighbor_key)
+                if not self.is_free(*neighbor_key):
+                    continue
+                if not self.is_collision_free(current, neighbor):
+                    continue
+
+                candidate_cost = queued_cost + self.segment_cost(current, neighbor)
+                if candidate_cost >= best_cost.get(neighbor_key, math.inf):
+                    continue
+                best_cost[neighbor_key] = candidate_cost
+                parent[neighbor_key] = current_key
+                estimate = self.distance(neighbor, goal) * self.costPerGrid
+                heapq.heappush(
+                    queue,
+                    (candidate_cost + estimate, candidate_cost, neighbor_key),
+                )
+
+        return [], None
 
     @staticmethod
     def is_ancestor(nodes, ancestor_index, node_index):
@@ -855,3 +966,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
