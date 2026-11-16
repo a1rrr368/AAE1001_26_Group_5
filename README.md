@@ -80,7 +80,9 @@ Running the script opens two figures: Scenario 1 cost by lower boundary and the 
 
 *Task 2 route at the first minimum-cost placement in the sweep.*
 
-<!-- 如需补充气流带位置与成本的曲线图，请从 Task2_Modified.py 保存新图，再用仓库相对路径插入。Figure7 是旧运行截图，数值与目前的结果不同。 -->
+![Scenario 1 cost by jet-stream placement](./Task2result_graph2.png)
+
+*Scenario 1 minimum operating cost across the tested jet-stream placements.*
 
 ## Task 3
 
