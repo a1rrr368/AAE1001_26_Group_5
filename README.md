@@ -172,8 +172,7 @@ The planners use their own cost calculations during search. After each search, t
 
 All three routes select **11 A330-900neo flights**. A* and Dijkstra tie on the shared score in this run. A* expanded 1,331 grid points compared with 2,904 for Dijkstra. The RRT* route was longer and scored higher in this run. Its result depends on the random seed and iteration budget. The figure's elapsed time includes time spent refreshing the plot during search and can vary by machine.
 
-![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./Figure6_TaskA3%20Compare.png)
-
+![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3_result.png)
 *Task A3 comparison on the same obstacle map. The elapsed times shown are from the run captured in the figure.*
 
 ## How to Run
