@@ -181,9 +181,6 @@ The previous comparison evaluates A*, Dijkstra and RRT* on the same original map
 
 The additional script, [`taskA3_additional`](./taskA3_additional), imports the planner implementations from [`TaskA3_compare_modifed.py`](./TaskA3_compare_modifed.py). Keep both files in the same directory, then run the script from that directory with:
 
-```bash
-python taskA3_additional
-
 ![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3_additional_result_graph1.png)
 *Task A3 comparison on the the tailered map. The elapsed times shown are from the run captured in the figure.*
 
