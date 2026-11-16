@@ -1,0 +1,301 @@
+"""Compare the latest A*, Dijkstra, and RRT* planners on a tailored scene."""
+
+import math
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.collections import LineCollection
+from matplotlib.patches import Rectangle
+
+import TaskA3_compare_modifed_8directions as planners
+
+
+START = (2.0, 10.0)
+GOAL = (28.0, 10.0)
+ROBOT_RADIUS = 0.5
+RESOLUTION = 1.0
+JET_STREAM_Y_MIN = 2.0
+JET_STREAM_HEIGHT = 5.0
+JET_STREAM_FACTOR = 0.1
+
+
+def build_scene():
+    ox, oy = [], []
+    for x in range(31):
+        ox.extend((float(x), float(x)))
+        oy.extend((0.0, 20.0))
+    for y in range(21):
+        ox.extend((0.0, 30.0))
+        oy.extend((float(y), float(y)))
+
+    for y in list(range(0, 9)) + list(range(12, 21)):
+        ox.append(15.0)
+        oy.append(float(y))
+
+    fc_x = list(range(5, 26))
+    fc_y = list(range(8, 13))
+    tc_x = list(range(10, 21))
+    tc_y = [10]
+    return ox, oy, fc_x, fc_y, tc_x, tc_y
+
+
+def path_length(rx, ry):
+    return sum(
+        math.hypot(rx[i + 1] - rx[i], ry[i + 1] - ry[i])
+        for i in range(len(rx) - 1)
+    )
+
+
+def run_planner(name, planner, planner_type, fc_x, fc_y, tc_x, tc_y):
+    explored = []
+    started = time.perf_counter()
+    if planner_type == "rrt":
+        rx, ry, native_cost = planner.planning(
+            *START,
+            *GOAL,
+            progress_callback=lambda x0, y0, x1, y1: explored.append(
+                ((x0, y0), (x1, y1))
+            ),
+        )
+    elif planner_type == "astar":
+        rx, ry, native_cost = planner.planning(
+            *START,
+            *GOAL,
+            animate=False,
+            print_result=False,
+            progress_callback=lambda x, y: explored.append((x, y)),
+        )
+    else:
+        rx, ry, native_cost = planner.planning(
+            *START,
+            *GOAL,
+            progress_callback=lambda x, y: explored.append((x, y)),
+        )
+    elapsed = time.perf_counter() - started
+    result = {
+        "name": name,
+        "rx": rx,
+        "ry": ry,
+        "native_cost": native_cost,
+        "elapsed": elapsed,
+        "explored": explored,
+    }
+    if native_cost is not None:
+        result["shared_cost"] = planners.score_route(
+            rx, ry, fc_x, fc_y, tc_x, tc_y, RESOLUTION
+        )
+        result["length"] = path_length(rx, ry)
+        (
+            result["operating_cost"],
+            result["aircraft"],
+            result["flights"],
+        ) = planners.calculate_scenario1_cost(result["shared_cost"])
+        print(
+            f"{name}: final route cost={result['shared_cost']:.4f}, "
+            f"Scenario 1=${result['operating_cost']:.2f} "
+            f"({result['flights']} x {result['aircraft']}), "
+            f"length={result['length']:.4f}, "
+            f"search={elapsed:.3f}s, path points={len(rx)}, "
+            f"explored={len(explored)}"
+        )
+    else:
+        print(f"{name}: no path, search={elapsed:.3f}s")
+    return result
+
+
+def main():
+    planners.show_animation = False
+    planners.JET_STREAM_Y_MIN = JET_STREAM_Y_MIN
+    planners.JET_STREAM_HEIGHT = JET_STREAM_HEIGHT
+    planners.JET_STREAM_FACTOR = JET_STREAM_FACTOR
+    ox, oy, fc_x, fc_y, tc_x, tc_y = build_scene()
+    scene_args = (
+        ox, oy, RESOLUTION, ROBOT_RADIUS, fc_x, fc_y, tc_x, tc_y
+    )
+
+    astar_result = run_planner(
+        "A*", planners.AStarPlanner(*scene_args), "astar",
+        fc_x, fc_y, tc_x, tc_y,
+    )
+    dijkstra_result = run_planner(
+        "Dijkstra", planners.DijkstraPlanner(*scene_args), "dijkstra",
+        fc_x, fc_y, tc_x, tc_y,
+    )
+    rrt = planners.RRTStarPlanner(
+        *scene_args,
+        step_size=3.0,
+        max_iter=3000,
+        goal_sample_rate=0.1,
+        seed=0,
+    )
+    rrt_result = run_planner(
+        "RRT*", rrt, "rrt", fc_x, fc_y, tc_x, tc_y,
+    )
+    results = (astar_result, dijkstra_result, rrt_result)
+
+    costs = [result.get("shared_cost") for result in results]
+    if any(cost is None for cost in costs):
+        raise RuntimeError("The comparison scene must produce a route for all planners")
+    rounded_costs = [round(cost, 4) for cost in costs]
+    if len(set(rounded_costs)) != 3:
+        raise RuntimeError(
+            f"The scenario no longer separates all route costs: {rounded_costs}"
+        )
+    print(
+        "Final route-cost spread: "
+        f"{max(costs) - min(costs):.4f} minutes; all three scores differ."
+    )
+
+    names = tuple(result["name"] for result in results)
+    colors = ("#1f77b4", "#ff7f0e", "#2ca02c")
+    cmaps = ("Blues", "Oranges", "Greens")
+    fig = plt.figure(figsize=(18, 13))
+    grid = fig.add_gridspec(2, 2)
+    map_axes = (
+        fig.add_subplot(grid[0, 0]),
+        fig.add_subplot(grid[0, 1]),
+        fig.add_subplot(grid[1, 0]),
+    )
+    summary_grid = grid[1, 1].subgridspec(3, 1, hspace=0.8)
+    summary_axes = [
+        fig.add_subplot(summary_grid[index, 0]) for index in range(3)
+    ]
+    fig.suptitle(
+        "A* vs Dijkstra vs RRT* — tailored-scene comparison",
+        fontsize=16,
+    )
+
+    for index, (axis, result) in enumerate(zip(map_axes, results)):
+        axis.plot(ox, oy, ".k", markersize=2, label="Obstacles", zorder=1)
+        axis.add_patch(
+            Rectangle(
+                (0.0, JET_STREAM_Y_MIN), 30.0, JET_STREAM_HEIGHT,
+                color="palegreen", alpha=0.22,
+                label=f"Jet stream ({JET_STREAM_FACTOR:.0%} cost)",
+            )
+        )
+        axis.add_patch(
+            Rectangle((5.0, 8.0), 21.0, 5.0, color="gold", alpha=0.15,
+                      label="Fuel area (+15%)")
+        )
+        axis.add_patch(
+            Rectangle((10.0, 10.0), 11.0, 1.0, color="magenta", alpha=0.18,
+                      label="Time area (+30%)")
+        )
+        if index == 2:
+            if result["explored"]:
+                artist = LineCollection(
+                    result["explored"], cmap=cmaps[index],
+                    linewidths=0.8, alpha=0.8, zorder=3,
+                )
+                artist.set_array(
+                    np.linspace(0.05, 1.0, len(result["explored"]))
+                )
+                axis.add_collection(artist)
+                fig.colorbar(
+                    artist, ax=axis, fraction=0.045, pad=0.025,
+                    label="Exploration order",
+                )
+        elif result["explored"]:
+            points = np.asarray(result["explored"], dtype=float)
+            artist = axis.scatter(
+                points[:, 0], points[:, 1],
+                c=np.linspace(0.05, 1.0, len(points)),
+                cmap=cmaps[index], vmin=0, vmax=1, s=12,
+                alpha=0.75, zorder=3,
+                label="Expanded grid nodes",
+            )
+            fig.colorbar(
+                artist, ax=axis, fraction=0.045, pad=0.025,
+                label="Exploration order",
+            )
+
+        if result["native_cost"] is not None:
+            axis.plot(
+                result["rx"], result["ry"], color=colors[index],
+                linewidth=2.5,
+                label=f"Final path ({result['length']:.1f} units)",
+                zorder=4,
+            )
+            axis.set_title(
+                f"{result['name']}: score {result['shared_cost']:.2f}"
+            )
+        else:
+            axis.set_title(f"{result['name']}: no path")
+        axis.plot(*START, "b*", markersize=11, label="Start", zorder=5)
+        axis.plot(*GOAL, "r*", markersize=11, label="Goal", zorder=5)
+        axis.set_xlim(-1, 31)
+        axis.set_ylim(-1, 21)
+        axis.set_aspect("equal", adjustable="box")
+        axis.set_xlabel("x")
+        axis.set_ylabel("y")
+        axis.grid(True, alpha=0.2)
+        axis.legend(loc="lower left", fontsize=7, ncol=2)
+
+    metric_specs = (
+        ("elapsed", "Elapsed time (log scale)", "{:.2f} ms"),
+        ("shared_cost", "Final route cost (minutes)", "{:.2f}"),
+        ("operating_cost", "Scenario 1 operating cost ($)", "${:,.0f}"),
+    )
+    for axis, (key, title, value_format) in zip(summary_axes, metric_specs):
+        values = [result.get(key, 0.0) or 0.0 for result in results]
+        max_value = max(values, default=0.0)
+        if key == "elapsed":
+            positive_times = [value for value in values if value > 0]
+            min_time = min(positive_times, default=1e-6)
+            max_time = max(positive_times, default=1e-5)
+            y_positions = np.arange(len(names))
+            axis.set_yticks(y_positions, labels=names)
+            axis.set_ylim(-0.5, len(names) - 0.5)
+            axis.set_xscale("log")
+            axis.set_xlim(min_time / 2, max_time * 3)
+            axis.set_xlabel("Seconds")
+            for index, (result, value) in enumerate(zip(results, values)):
+                if value > 0:
+                    axis.scatter(
+                        value, y_positions[index], color=colors[index],
+                        s=55, zorder=3,
+                    )
+                    axis.annotate(
+                        value_format.format(value * 1000),
+                        (value, y_positions[index]),
+                        xytext=(7, 0), textcoords="offset points",
+                        va="center", fontsize=8,
+                    )
+                else:
+                    axis.text(
+                        min_time / 1.8, y_positions[index],
+                        result.get("status", "No path"),
+                        va="center", fontsize=8,
+                    )
+            axis.set_title(title, fontsize=10)
+            axis.grid(axis="x", alpha=0.25)
+            axis.set_axisbelow(True)
+            continue
+
+        bars = axis.barh(names, values, color=colors)
+        axis.set_xlim(0, max(1.0, max_value * 1.2))
+        axis.set_title(title, fontsize=10)
+        axis.grid(axis="x", alpha=0.25)
+        axis.set_axisbelow(True)
+        for result, bar in zip(results, bars):
+            value = result.get(key)
+            label = (
+                result.get("status", "No path")
+                if value is None
+                else value_format.format(value)
+            )
+            label_x = 0.02 * axis.get_xlim()[1] if value is None else value + max_value * 0.015
+            axis.text(
+                label_x, bar.get_y() + bar.get_height() / 2,
+                label, va="center", ha="left", fontsize=8,
+            )
+
+    fig.subplots_adjust(left=0.06, right=0.97, top=0.92, bottom=0.07,
+                        wspace=0.30, hspace=0.28)
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
