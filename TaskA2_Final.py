@@ -33,7 +33,7 @@ class AStarPlanner:
         self._fuel_y = frozenset(fuel_y)
 
         # REVIEW NOTE: A2 uses a 50% weighted movement penalty, not a dollar charge.
-        self.Delta_Fuel = 0.5
+        self.Delta_Fuel = 0.15
         self.costPerGrid = 1.0
 
     class Node:
