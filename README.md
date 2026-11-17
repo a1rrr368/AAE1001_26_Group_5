@@ -331,12 +331,15 @@ Overall, this project introduced me to factors that must be considered while mak
 </details>
 
 <details> <summary><strong>CHEN Lingxi</strong></summary>
-I worked on Task 2 and Task A3, and revised the PowerPoint slides to make the methods and results easier to follow.
+I mainly worked on Task 2 and Task A3, while also modifying some of the other tasks. I revised the PowerPoint slides to make the methods and results easier to follow.
 
-For Task 2, I helped implement and evaluate the jet-stream case. Rather than describing the stream only as a map feature, I checked its effect against the no-stream baseline: with the tested band five units high and its lower boundary at y = 5, the route time changed from 58.7875 to 58.5960 minutes. For Scenario 1, the reported cost fell from $81,751.58 to $81,557.02, a saving of $194.56 (about 0.238%). This comparison also made me careful not to call y = 5 the best possible placement, because we verified only that tested position.
+For Task 2, I helped implement and evaluate different jet-stream positions. We initially assumed that placing the jet stream at (y=5) was best. I changed the experiment to test all integer positions in the specified range. The lowest Scenario 1 cost was $80,931.24, with the jet stream starting at (y=10) and covering (y=10) to (y=15). Compared with the Task 1 baseline of $81,751.58, this represents a saving of $820.34, or about 0.719%.
 
-For Task A3, I completed the Dijkstra and RRT* implementations and compared them with A* on the same map, from (5, 40) to (20, 30). Dijkstra matched A* at a route cost of 58.7875, while the tested RRT* run returned 59.7257 using seed 0 and 5,000 iterations. I learned that these numbers need context: A* and Dijkstra use the same grid edges, while RRT* plans continuous segments and samples regional penalties differently. I revised the slides to show the shared setup, key results, and this limitation instead of presenting the algorithms as directly identical.
+For Task A3, I implemented Dijkstra and RRT* and compared them with A* in two scenarios. In the original scenario, from (5, 40) to (20, 30), all three algorithms achieved a shortest distance of 58.7875 units. To make the comparison fair, I allowed RRT* to explore in continuous directions and then refined its route to use eight-direction movement.Some sources suggest that RRT* can perform well in high-dimensional or complex scenarios. To explore this, I also tested a tailored scene with a wall, a narrow passage between (2, 10) and (28, 10), and fuel, time, and jet-stream regions. In this scenario, RRT* achieved the shortest distance, 29.9698 units, followed by Dijkstra at 29.9784 and A* at 33.1260.
 
+These two tests helped me form a more balanced view of the algorithms. A* uses a heuristic to guide the search and can be efficient, but its performance depends on the heuristic and grid setup. Dijkstra finds the lowest-cost route on the grid, but may explore more nodes and take longer. RRT* uses random sampling to explore complex spaces, but its results depend on randomness and the iteration limit, so global optimality is not guaranteed. This taught me to test algorithms in different scenarios and account for differences in scoring methods and algorithm designs, rather than treating one run as a universal ranking.
+
+Overall, this group project gave me an opportunity to start coding with the help of AI and strengthened my teamwork skills.
 </details>
 
 <details>
