@@ -236,16 +236,16 @@ python -c 'import random, runpy; random.seed(5); runpy.run_path("TaskA2_Final.py
 
 <!-- UPDATE TEAM: identities and individual allocations still require team confirmation; no details invented. | README line 214. -->
 
-| Name | Student ID | Contribution |
-|---|---|---|
-| Louis | 26125637D | I completed Task A1 with ChatGPT's help, created the Task 1 presentation, helped clarify the Task 2 requirements, and revised the cost calculations and flight constraints in a teammate’s Task 3 code. |
-| Romeo | 26088558D | Refined the programs for all tasks and tailored the aircraft design approach |
-| Sahil | 26127898D | Wrote the code that helped do the calculations for Task 3, helped check the best approaches with the jet stream with teammates in Task 2, and developed presentation slides for Task A3 |
-| Justin | 24082728D | Revised the draft code of Task 1 to clear out some errors, completed Task A2 with the help of ChatGPT and made the presentation slides for the task. |
-|CHEN Lingxi|26107016D| I completed and clarify the Task 2 ,completed the 2 algrothism of Task A3.I also helped to clearify the design of our aircraft in Task3
-| LOI Chi Wun | 26121716D | I ran the tests for Task A1, gathered two maps with both visiting orders, and finished the presentation slides for Task A1. |
-| Cai Xintong Michelle | 26138185D | I completed Task 2 slides and organized the comparison of flight time and operating costs. Calculated and presented cost savings and percentage reductions for the aircraft options. |
-| Sama | 26126077D | I modified the initial draft of A* path planning program and cost models in T1, collaborated on jet stream and passenger capacity optimization in T2&3, and prepared the final presentation slides covering intro to path planning and overview for the project and each task.
+| Name | GitHub Nickname | Student ID | Contribution |
+|---|---|---|---|
+| Louis | — | 26125637D | I completed Task A1 with ChatGPT's help, created the Task 1 presentation, helped clarify the Task 2 requirements, and revised the cost calculations and flight constraints in a teammate’s Task 3 code. |
+| Romeo | — | 26088558D | Refined the programs for all tasks and tailored the aircraft design approach |
+| Sahil | — | 26127898D | Wrote the code that helped do the calculations for Task 3, helped check the best approaches with the jet stream with teammates in Task 2, and developed presentation slides for Task A3 |
+| Justin | — | 24082728D | Revised the draft code of Task 1 to clear out some errors, completed Task A2 with the help of ChatGPT and made the presentation slides for the task. |
+|CHEN Lingxi| — |26107016D| I completed and clarify the Task 2 ,completed the 2 algrothism of Task A3.I also helped to clearify the design of our aircraft in Task3 |
+| LOI Chi Wun | — | 26121716D | I ran the tests for Task A1, gathered two maps with both visiting orders, and finished the presentation slides for Task A1. |
+| Cai Xintong Michelle | — | 26138185D | I completed Task 2 slides and organized the comparison of flight time and operating costs. Calculated and presented cost savings and percentage reductions for the aircraft options. |
+| Sama | — | 26126077D | I modified the initial draft of A* path planning program and cost models in T1, collaborated on jet stream and passenger capacity optimization in T2&3, and prepared the final presentation slides covering intro to path planning and overview for the project and each task. |
 
 ## References
 
@@ -363,5 +363,6 @@ One challenge I encountered was ensuring that the figures presented in the slide
 Overall, this project improved my data analysis, problem-solving, and presentation skills. It also helped me understand the importance of teamwork and effective communication when combining programming results with technical explanations. In future projects, I would pay more attention to verifying data at an earlier stage and presenting technical findings more efficiently.
 
 </details>
+
 
 
