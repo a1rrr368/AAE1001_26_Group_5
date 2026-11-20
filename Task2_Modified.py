@@ -162,11 +162,11 @@ class AStarPlanner:
             parent_index = n.parent_index
         return rx, ry
 
-    # REVIEW TODO (not applied): Discounted edges can cost less than this heuristic.
-    # Consider a 0.95-scaled bound/reopening nodes before claiming global optimality.
-    # Keep the current heuristic/search policy here because changing it may alter outputs.
+    # REVIEW FIX: Scale the distance bound by the lowest base movement factor.
+    # With the current non-negative regional surcharges, this is a consistent bound.
+    # This corrects some sweep routes and ties; the selected default design is unchanged.
     def calc_heuristic(self, n1, n2):
-        return math.hypot(n1.x - n2.x, n1.y - n2.y) * self.costPerGrid
+        return min(1.0, JET_STREAM_FACTOR) * math.hypot(n1.x - n2.x, n1.y - n2.y) * self.costPerGrid
 
     def calc_grid_position(self, index, min_position):
         return index * self.resolution + min_position
@@ -219,7 +219,7 @@ class AStarPlanner:
 
 
 def s1_cost(t):
-    """Scenario 1 total for 11 A330-900neo flights."""
+    """Scenario 1 total assuming 11 A330-900neo flights; no aircraft search here."""
     return 11 * (0.85 * 84 * t + 21 * t + 2000)
 
 
@@ -331,7 +331,7 @@ def main():
 
     print(f"\nBest jet-stream lower y-coordinate: {best['y_lo']}")
     if len(best_rows) > 1:
-        tied_y_values = ", ".join(str(row["y_lo"]) for row in best_rows)
+        tied_y_values = ", ".join(str(row["y_lo"]) for row in best_rows if row["y_lo"] != best["y_lo"])
         print(f"Other placements with the same minimum cost: {tied_y_values}")
     print(f"Best band: [{best['y_lo']}, {best['y_lo'] + JET_STREAM_HEIGHT}]")
     print(f"Best Scenario 1 total cost: ${best['s1_cost']:.2f}")
@@ -438,8 +438,12 @@ def main():
                 best_name = name
                 best_n = n_needed
 
-        print(f"  >>> BEST: {best_n} flights of {best_name}  →  total cost ${best_total:.2f}")
+        if best_name is None:
+            print("  >>> No feasible aircraft meets the flight limit.")
+        else:
+            print(f"  >>> BEST: {best_n} flights of {best_name}  →  total cost ${best_total:.2f}")
 
 
 if __name__ == "__main__":
     main()
+
