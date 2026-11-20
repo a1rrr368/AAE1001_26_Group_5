@@ -8,7 +8,7 @@ import numpy as np
 from matplotlib.collections import LineCollection
 from matplotlib.patches import Rectangle
 
-import TaskA3_compare_modifed as planners
+import TaskA3_Compare_Modified as planners
 
 
 START = (2.0, 10.0)
