@@ -26,6 +26,15 @@ JET_STREAM_FACTOR = 1.0
 class AStarPlanner:
 
     def __init__(self, ox, oy, resolution, rr, fc_x, fc_y, tc_x, tc_y):
+        # REVIEW: Reject invalid grid settings and malformed obstacle coordinates early.
+        if not math.isfinite(resolution) or resolution <= 0:
+            raise ValueError("resolution must be finite and positive")
+        if not math.isfinite(rr) or rr < 0:
+            raise ValueError("robot radius must be finite and non-negative")
+        if len(ox) == 0 or len(ox) != len(oy):
+            raise ValueError("obstacle coordinate lists must be non-empty and equal in length")
+        if not all(math.isfinite(v) for v in (*ox, *oy)):
+            raise ValueError("obstacle coordinates must be finite")
         self.resolution = resolution
         self.rr = rr
         self.min_x = self.min_y = 0
@@ -52,10 +61,20 @@ class AStarPlanner:
         if animate is None:
             animate = show_animation
 
+        # REVIEW: Invalid endpoints must not enter grid indexing or the search.
+        if not all(math.isfinite(v) for v in (sx, sy, gx, gy)):
+            print("Start or goal is invalid – no path found")
+            return [], [], None
+
         start_node = self.Node(self.calc_xy_index(sx, self.min_x),
                                self.calc_xy_index(sy, self.min_y), 0.0, -1)
         goal_node = self.Node(self.calc_xy_index(gx, self.min_x),
                               self.calc_xy_index(gy, self.min_y), 0.0, -1)
+        # REVIEW: Match RRT* by checking both endpoints before expanding any node.
+        if not self.verify_node(start_node) or not self.verify_node(goal_node):
+            print("Start or goal is occupied or outside the map – no path found")
+            return [], [], None
+
         open_set, closed_set = {}, {}
         open_set[self.calc_grid_index(start_node)] = start_node
 
@@ -189,10 +208,20 @@ class AStarPlanner:
 class DijkstraPlanner(AStarPlanner):
 
     def planning(self, sx, sy, gx, gy, progress_callback=None):
+        # REVIEW: Invalid endpoints must not enter grid indexing or the search.
+        if not all(math.isfinite(v) for v in (sx, sy, gx, gy)):
+            print("Start or goal is invalid – no path found")
+            return [], [], None
+
         start_node = self.Node(self.calc_xy_index(sx, self.min_x),
                                self.calc_xy_index(sy, self.min_y), 0.0, -1)
         goal_node = self.Node(self.calc_xy_index(gx, self.min_x),
                               self.calc_xy_index(gy, self.min_y), 0.0, -1)
+        # REVIEW: Match RRT* by checking both endpoints before expanding any node.
+        if not self.verify_node(start_node) or not self.verify_node(goal_node):
+            print("Start or goal is occupied or outside the map – no path found")
+            return [], [], None
+
         start_id = self.calc_grid_index(start_node)
         open_set, closed_set = {start_id: start_node}, {}
         priority_queue = [(start_node.cost, start_id)]
@@ -263,6 +292,15 @@ class RRTStarPlanner:
 
     def __init__(self, ox, oy, resolution, rr, fc_x, fc_y, tc_x, tc_y,
                  step_size=3.0, max_iter=5000, goal_sample_rate=0.1, seed=0):
+        # REVIEW: Reject invalid grid settings and malformed obstacle coordinates early.
+        if not math.isfinite(resolution) or resolution <= 0:
+            raise ValueError("resolution must be finite and positive")
+        if not math.isfinite(rr) or rr < 0:
+            raise ValueError("robot radius must be finite and non-negative")
+        if len(ox) == 0 or len(ox) != len(oy):
+            raise ValueError("obstacle coordinate lists must be non-empty and equal in length")
+        if not all(math.isfinite(v) for v in (*ox, *oy)):
+            raise ValueError("obstacle coordinates must be finite")
         self.resolution = resolution
         self.rr = rr
         self.min_x = self.min_y = 0
@@ -304,6 +342,11 @@ class RRTStarPlanner:
             self.parent_index = parent_index
 
     def planning(self, sx, sy, gx, gy, progress_callback=None):
+        # REVIEW: Invalid endpoints must not enter grid indexing or the search.
+        if not all(math.isfinite(v) for v in (sx, sy, gx, gy)):
+            print("Start or goal is invalid – no path found")
+            return [], [], None
+
         start = self.Node(self.calc_xy_index(sx, self.min_x),
                           self.calc_xy_index(sy, self.min_y))
         goal = self.Node(self.calc_xy_index(gx, self.min_x),
@@ -626,19 +669,26 @@ class RRTStarPlanner:
         self.x_width = round((self.max_x - self.min_x) / self.resolution)
         self.y_width = round((self.max_y - self.min_y) / self.resolution)
 
+        # REVIEW: Reuse obstacle pairs without changing order or collision calculations.
+        obstacle_points = tuple(zip(ox, oy))
         self.obstacle_map = [[False] * self.y_width for _ in range(self.x_width)]
         for ix in range(self.x_width):
             x = self.calc_grid_position(ix, self.min_x)
             for iy in range(self.y_width):
                 y = self.calc_grid_position(iy, self.min_y)
-                for iox, ioy in zip(ox, oy):
+                for iox, ioy in obstacle_points:
                     if math.hypot(iox - x, ioy - y) <= self.rr:
                         self.obstacle_map[ix][iy] = True
                         break
 
 def score_route(rx, ry, fc_x, fc_y, tc_x, tc_y, resolution=1.0):
     """Score any returned route with the same midpoint-sampled surcharge model."""
-    if len(rx) < 2:
+    # REVIEW: Invalid paths must not be silently truncated by zip or scored as valid.
+    if not math.isfinite(resolution) or resolution <= 0:
+        raise ValueError("resolution must be finite and positive")
+    if len(rx) != len(ry) or len(rx) < 2:
+        return None
+    if not all(math.isfinite(v) for v in (*rx, *ry)):
         return None
 
     fuel_x, fuel_y = frozenset(fc_x), frozenset(fc_y)
@@ -664,6 +714,9 @@ def score_route(rx, ry, fc_x, fc_y, tc_x, tc_y, resolution=1.0):
 
 def calculate_scenario1_cost(route_cost):
     """Return the least Scenario 1 operating cost for a shared route score."""
+    # REVIEW: Reject missing or invalid scores before calculating monetary costs.
+    if route_cost is None or not math.isfinite(route_cost) or route_cost < 0:
+        raise ValueError("route_cost must be finite and non-negative")
     aircraft = (
         {"name": "A321neo", "rate": 54, "capacity": 200, "time": 15, "fixed": 1800},
         {"name": "A330-900neo", "rate": 84, "capacity": 300, "time": 21, "fixed": 2000},
@@ -926,6 +979,13 @@ def main():
         shared_cost = score_route(
             rx, ry, fc_x, fc_y, tc_x, tc_y, grid_size
         )
+        # REVIEW: Handle a malformed returned path before passing its score to costing.
+        if shared_cost is None:
+            results[name]["status"] = "Invalid route"
+            print(f"{name}: invalid route; operating cost was not calculated.")
+            update_map(index, force=True)
+            refresh_dashboard()
+            continue
         operating_cost, aircraft_name, flight_count = calculate_scenario1_cost(shared_cost)
         path_length = sum(
             math.hypot(rx[i + 1] - rx[i], ry[i + 1] - ry[i])
@@ -966,4 +1026,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
