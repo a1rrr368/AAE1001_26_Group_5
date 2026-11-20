@@ -321,13 +321,17 @@ Ultimately, this project bridged the gap between theoretical aeronautics and com
 
 <details>
 <summary><strong>Justin</strong></summary>
-In Task A2, I modified the path-planning code so that the environment and mission change randomly for every run. The main updates included generating a fixed 40×40 fuel area at a random location, disabling diagonal movement so the vehicle can only move in four directions, and randomly placing the start and goal points with a minimum distance of 40 units between them.
+   
+In Task 1, I discovered some errors in our draft code when I tried to run it in Jupyter Notebook. I used ChatGPT to find out the key problem of the code and asked it to suggest some ways for solving the errors. Finally, I fix the issue and revised the code.
+
+In Task A2, I modified the path-planning code so that the environment and mission change randomly for every trial. The main updates included generating a fixed 40×40 fuel area at a random location, disabling diagonal movement so the vehicle can only move in four directions, and randomly placing the start and goal points with a minimum distance of 40 units between them.
 
 I also generated obstacles with a reasonable density while adding a clearance zone around the start and goal to prevent immediate blockage. The plotting order was adjusted so the fuel area does not cover the obstacles.
 
-The main challenges were balancing obstacle density and ensuring the random start/goal pair always left enough free space for a valid path. Through testing, I learned the importance of carefully ordered random generation and geometric constraints.
+The main challenges were balancing obstacle density and ensuring the random start/goal pair always left enough free space for a valid path. Through several testing, I learned the importance of carefully ordered random generation and geometric constraints.
 
-Overall, this task improved my understanding of how to create more realistic and flexible simulation environments for path planning.
+Overall, these tasks improved my understanding of how to create more realistic and flexible simulation environments for path planning.
+
 <!-- 把 Member 4 换成你的姓名。在这里粘贴 200–250 词英文反思，写清实际分工、遇到的问题、怎么处理和学到了什么。正文前后留空行。 -->
 
 </details>
