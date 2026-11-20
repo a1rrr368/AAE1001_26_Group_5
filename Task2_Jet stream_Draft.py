@@ -37,6 +37,11 @@ class AStarPlanner:
         self.tc_x = tc_x
         self.tc_y = tc_y
 
+        # REVIEW: Cache static region membership; retain the original coordinate lists.
+        # Independent x/y checks preserve the existing rectangular-region rule.
+        self._fc_x, self._fc_y = frozenset(fc_x), frozenset(fc_y)
+        self._tc_x, self._tc_y = frozenset(tc_x), frozenset(tc_y)
+
         self.Delta_TC = 0.30   # +30 % time-consuming area (pink)
         self.Delta_FC = 0.15   # +15 % fuel-consuming area (yellow)
         self.costPerGrid = 1.0
@@ -57,6 +62,12 @@ class AStarPlanner:
         open_set, closed_set = {}, {}
         open_set[self.calc_grid_index(start_node)] = start_node
 
+        # REVIEW: Register Escape once per search, rather than once per visited node.
+        if show_animation:
+            plt.gcf().canvas.mpl_connect(
+                'key_release_event',
+                lambda event: [exit(0) if event.key == 'escape' else None])
+
         while True:
             if not open_set:
                 print("Open set is empty – no path found")
@@ -71,9 +82,6 @@ class AStarPlanner:
                 x_pos = int(round(self.calc_grid_position(current.x, self.min_x)))
                 y_pos = int(round(self.calc_grid_position(current.y, self.min_y)))
                 plt.plot(x_pos, y_pos, "xc")
-                plt.gcf().canvas.mpl_connect(
-                    'key_release_event',
-                    lambda event: [exit(0) if event.key == 'escape' else None])
                 if len(closed_set) % 20 == 0:
                     plt.pause(0.001)
 
@@ -96,14 +104,15 @@ class AStarPlanner:
                 py = self.calc_grid_position(node.y, self.min_y)
 
                 # Time-consuming area (pink) +30%
-                if px in self.tc_x and py in self.tc_y:
+                if px in self._tc_x and py in self._tc_y:
                     node.cost += self.Delta_TC * self.motion[i][2]
 
                 # Fuel-consuming area (yellow) +15%
-                if px in self.fc_x and py in self.fc_y:
+                if px in self._fc_x and py in self._fc_y:
                     node.cost += self.Delta_FC * self.motion[i][2]
 
-                # Task 2: Jet stream area (-5% cost reduction)
+                # REVIEW: Inclusive band; subtract 5% of base movement cost only.
+                # Fuel/time-region surcharges remain additive and are not discounted.
                 if JET_STREAM_Y_MIN <= py <= (JET_STREAM_Y_MIN + JET_STREAM_HEIGHT):
                     node.cost -= (1.0 - JET_STREAM_FACTOR) * self.motion[i][2] * self.costPerGrid
 
@@ -130,6 +139,9 @@ class AStarPlanner:
             parent_index = n.parent_index
         return rx, ry
 
+    # REVIEW TODO: Discounted edges may cost less than this heuristic estimates.
+    # Retain the legacy heuristic and tie order to preserve current outputs;
+    # a scaled heuristic needs separate route/cost validation before adoption.
     def calc_heuristic(self, n1, n2):
         return math.hypot(n1.x - n2.x, n1.y - n2.y) * self.costPerGrid
 
@@ -161,12 +173,14 @@ class AStarPlanner:
         self.x_width = round((self.max_x - self.min_x) / self.resolution)
         self.y_width = round((self.max_y - self.min_y) / self.resolution)
 
+        # REVIEW: Reuse obstacle pairs; preserve order and the exact collision test.
+        obstacle_points = tuple(zip(ox, oy))
         self.obstacle_map = [[False] * self.y_width for _ in range(self.x_width)]
         for ix in range(self.x_width):
             x = self.calc_grid_position(ix, self.min_x)
             for iy in range(self.y_width):
                 y = self.calc_grid_position(iy, self.min_y)
-                for iox, ioy in zip(ox, oy):
+                for iox, ioy in obstacle_points:
                     if math.hypot(iox - x, ioy - y) <= self.rr:
                         self.obstacle_map[ix][iy] = True
                         break
@@ -313,7 +327,11 @@ def main():
                 best_name = name
                 best_n = n_needed
 
-        print(f"  >>> BEST: {best_n} flights of {best_name}  →  total cost ${best_total:.2f}")
+        # REVIEW: Report an all-infeasible scenario without a misleading None/inf result.
+        if best_name is None:
+            print("  >>> No feasible aircraft meets the flight limit.")
+        else:
+            print(f"  >>> BEST: {best_n} flights of {best_name}  →  total cost ${best_total:.2f}")
 
 
 if __name__ == "__main__":
