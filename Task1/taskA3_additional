@@ -166,6 +166,8 @@ def main():
         fontsize=16,
     )
 
+    exploration_artists = []
+    route_artists = []
     for index, (axis, result) in enumerate(zip(map_axes, results)):
         axis.plot(ox, oy, ".k", markersize=2, label="Obstacles", zorder=1)
         axis.add_patch(
@@ -184,24 +186,19 @@ def main():
                       label="Time area (+30%)")
         )
         if index == 2:
-            if result["explored"]:
-                artist = LineCollection(
-                    result["explored"], cmap=cmaps[index],
-                    linewidths=0.8, alpha=0.8, zorder=3,
-                )
-                artist.set_array(
-                    np.linspace(0.05, 1.0, len(result["explored"]))
-                )
-                axis.add_collection(artist)
-                fig.colorbar(
-                    artist, ax=axis, fraction=0.045, pad=0.025,
-                    label="Exploration order",
-                )
-        elif result["explored"]:
-            points = np.asarray(result["explored"], dtype=float)
+            artist = LineCollection(
+                [], cmap=cmaps[index],
+                linewidths=0.8, alpha=0.8, zorder=3,
+            )
+            artist.set_array(np.array([]))
+            axis.add_collection(artist)
+            fig.colorbar(
+                artist, ax=axis, fraction=0.045, pad=0.025,
+                label="Exploration order",
+            )
+        else:
             artist = axis.scatter(
-                points[:, 0], points[:, 1],
-                c=np.linspace(0.05, 1.0, len(points)),
+                [], [], c=[],
                 cmap=cmaps[index], vmin=0, vmax=1, s=12,
                 alpha=0.75, zorder=3,
                 label="Expanded grid nodes",
@@ -210,18 +207,21 @@ def main():
                 artist, ax=axis, fraction=0.045, pad=0.025,
                 label="Exploration order",
             )
+        exploration_artists.append(artist)
 
         if result["native_cost"] is not None:
-            axis.plot(
-                result["rx"], result["ry"], color=colors[index],
+            route_artist, = axis.plot(
+                [], [], color=colors[index],
                 linewidth=2.5,
                 label=f"Final path ({result['length']:.1f} units)",
                 zorder=4,
             )
+            route_artists.append(route_artist)
             axis.set_title(
                 f"{result['name']}: score {result['shared_cost']:.2f}"
             )
         else:
+            route_artists.append(None)
             axis.set_title(f"{result['name']}: no path")
         axis.plot(*START, "b*", markersize=11, label="Start", zorder=5)
         axis.plot(*GOAL, "r*", markersize=11, label="Goal", zorder=5)
@@ -292,6 +292,55 @@ def main():
                 label, va="center", ha="left", fontsize=8,
             )
 
+    plt.show(block=False)
+    plt.pause(0.1)
+
+    max_explored = max(len(result["explored"]) for result in results)
+    refresh_every = 20
+    frame_count = max(1, math.ceil(max_explored / refresh_every))
+    for frame in range(frame_count + 1):
+        end = min(max_explored, frame * refresh_every)
+        for index, (axis, result) in enumerate(zip(map_axes, results)):
+            explored = result["explored"]
+            current_end = min(end, len(explored))
+            artist = exploration_artists[index]
+            if index == 2:
+                artist.set_segments(explored[:current_end])
+                artist.set_array(
+                    np.linspace(0.05, 1.0, current_end)
+                    if current_end
+                    else np.array([])
+                )
+            elif explored:
+                points = np.asarray(explored[:current_end], dtype=float)
+                artist.set_offsets(points.reshape(-1, 2))
+                artist.set_array(
+                    np.linspace(0.05, 1.0, len(points))
+                )
+            axis.set_title(
+                f"{result['name']}: exploring "
+                f"({current_end}/{len(explored)} nodes)"
+            )
+        fig.canvas.draw_idle()
+        plt.pause(0.001)
+
+    for index, (axis, result) in enumerate(zip(map_axes, results)):
+        if result["native_cost"] is not None:
+            route_artist = route_artists[index]
+            route_length = len(result["rx"])
+            for point_index in range(1, route_length + 1):
+                route_artist.set_data(
+                    result["rx"][:point_index],
+                    result["ry"][:point_index],
+                )
+                if point_index % 2 == 0:
+                    fig.canvas.draw_idle()
+                    plt.pause(0.012)
+            axis.set_title(
+                f"{result['name']}: score {result['shared_cost']:.2f}"
+            )
+    fig.canvas.draw_idle()
+
     fig.subplots_adjust(left=0.06, right=0.97, top=0.92, bottom=0.07,
                         wspace=0.30, hspace=0.28)
     plt.show()
@@ -299,3 +348,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
