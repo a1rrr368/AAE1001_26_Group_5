@@ -256,7 +256,7 @@ python -c 'import random, runpy; random.seed(5); runpy.run_path("Task1/TaskA2_Fi
 | Li Wai Fung | Li-Wai-Fung | 24082728D | Revised the draft code of Task 1 to clear out some errors, completed Task A2 with the help of ChatGPT and made the presentation slides for the task. |
 |CHEN Lingxi| Lingxi-123-lab |26107016D| I completed and clarify the Task 2 ,completed the 2 algrothism of Task A3.I also helped to clearify the design of our aircraft in Task3 |
 | LOI Chi Wun | LoiCW3 | 26121716D | I ran the tests for Task A1, gathered two maps with both visiting orders, and finished the presentation slides for Task A1. |
-| Cai Xintong Michelle | — | 26138185D | I completed Task 2 slides and organized the comparison of flight time and operating costs. Calculated and presented cost savings and percentage reductions for the aircraft options. |
+| Cai Xintong Michelle | MichelleCai32 | 26138185D | I completed Task 2 slides and organized the comparison of flight time and operating costs. Calculated and presented cost savings and percentage reductions for the aircraft options. |
 | Sama | sama26052605 | 26126077D | I modified the initial draft of A* path planning program and cost models in T1, collaborated on jet stream and passenger capacity optimization in T2&3, and prepared the final presentation slides covering intro to path planning and overview for the project and each task. |
 
 ## References
