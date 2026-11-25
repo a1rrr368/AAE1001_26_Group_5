@@ -189,8 +189,7 @@ In the run shown, all three routes have the same displayed shared score and leng
 
 ![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3/TaskA3_Compare_Modified_animation.gif)
 *Task A3 comparison on the same obstacle map. The elapsed times shown are from the run captured in the figure.*
-![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost]
-(./TaskA3/TaskA3_result.png)
+![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3/Figure6_TaskA3_Compare.png)
 *Task A3 final results.*
 
 
@@ -202,9 +201,8 @@ The additional script, [`taskA3_additional`](./TaskA3/taskA3_additional), import
 
 ![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3/A3_additional_animation.gif)
 *Task A3 comparison on the the tailered map. The elapsed times shown are from the run captured in the figure.*
-![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost]
-(./TaskA3/TaskA3_additional_result_graph1.png)
-*Task A3 additional final result.*
+![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](.TaskA3/TaskA3_additional_result_graph1.png)
+*Task A3 additional final results.*
 
 
 The shared route score applies the fuel and time region surcharges to each returned route. The current shared scoring function does not include the jet-stream discount; A* does use that discount during its search.
