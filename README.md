@@ -213,7 +213,7 @@ The shared route score applies the fuel and time region surcharges to each retur
 |---|---:|---:|---:|---:|
 | A* | 0.92 | 33.1260 | 32.4853 | 55,669.23 |
 | Dijkstra | 3.02 | 29.9784 | 26.8284 | 52,470.07 |
-| RRT* (seed 0, 5,000 iterations)1214.37 | 1,214.37 | 29.9698 | 26.8284 | 52,461.35 |
+| RRT* (seed 0, 5,000 iterations) | 1,214.37 | 29.9698 | 26.8284 | 52,461.35 |
 
 In this run, RRT* finds the shortest way with a much longer time,while Dijkstra find a similar way in much shorter time. A* finds a longer way than them, but with the shortest time. This test illustrate that RRT* is suitable for finding the shortest way in a complex and dynamic scenario, but it also requires higher  computational power.Dijkstra perfers best comprehensively in this scenario,since it find a way with acceptable tolerance and use much shorter time. And A* may not be suitable for finding the perfect shortest way in such a complex scenario.
 
@@ -223,14 +223,23 @@ In this run, RRT* finds the shortest way with a much longer time,while Dijkstra 
 
 [TaskA3_Compare_Modified.py](./TaskA3/TaskA3_Compare_Modified.py) and [`taskA3_additional`](./TaskA3/taskA3_additional) only conpare the 3 algorithisms in 2D scenarios. To compare theim capability in higher dimension space, we designed this 3D comparison task:[TaskA3_3D_compare.py](./TaskA3/TaskA3_3D_compare.py) This task runs A*, Dijkstra and RRT* with the same map, its details are as follows:
 1.start **(1,1,1)** and goal **(18,18,18)**. 
-2.Obstacles
+
+2.Obstacles.
+
 Wall at x = 6, spanning y,z = 0–19, with an opening at y,z = 2–6.
+
 Wall at x = 13, spanning y,z = 0–19, with an opening at y,z = 13–17.
+
 Central block: x,y,z = 8–10.
+
 Flat XY obstacle: z = 9, spanning x,y = 7–11.
+
 3.Fuel areas(15% weighted)
+
 x = 7–10, y = 8–12, z = 4–9
+
 x = 13–16, y = 8–11, z = 12–15
+
 the results are as follows:
 
 
@@ -238,7 +247,7 @@ the results are as follows:
 |---|---:|---:|---:|
 | A* | 0.085 | 30.56| 30.56| 
 | Dijkstra | 0.376 | 32.86 | 32.86| 
-| RRT* (seed 10,000 iterations)7973 | 10.21 | 32.86 | 32.86 | 
+| RRT* (seed 10,000 iterations) | 7973 | 32.86 | 32.86 | 
 
 note:since the route did not pass the fuel area, so the costs are be in direct proportion to the length.
 
