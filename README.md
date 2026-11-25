@@ -239,11 +239,12 @@ the results are as follows:
 | A* | 0.085 | 30.56| 30.56| 
 | Dijkstra | 0.376 | 32.86 | 32.86| 
 | RRT* (seed 10,000 iterations)7973 | 10.21 | 32.86 | 32.86 | 
+
 note:since the route did not pass the fuel area, so the costs are be in direct proportion to the length.
 
 In the run shown, RRT* finds the shortest route of 30.56 units with an extremely long runtime of 7973s.Dijkstra and A* finds a longer route of 32.86 units in 0.376s and 0.085s.
 
-![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3/TaskA3_3D_compare.py)
+![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3/TaskA3_3D_comparison.gif)
 *Task A3 comparison on the same 3D obstacle map. *
 The runtime of RRT* in 3D scenario is roughly 100,000 times longer than other 2 algrothism, while in A3_additional its 1000times, in A3 its 2 times. This illustrates that with the complexoty of scenario increased, the runtime gap between RRT* and other 2 algorithms incrases in exponential level.
 Also, with the increase of scenario complexity, RRT* performs a better optimality than the other 2 algorithms
