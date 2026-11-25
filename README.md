@@ -187,7 +187,7 @@ The planners use their own cost calculations during search. After each search, t
 
 In the run shown, all three routes have the same displayed shared score and length, and each selects **11 A330-900neo flights**. The displayed times include refreshing the plot during search, so they can vary by machine.
 
-![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3/TaskA3_result.png)
+![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3/TaskA3_Compare_Modified_animation.gif)
 *Task A3 comparison on the same obstacle map. The elapsed times shown are from the run captured in the figure.*
 
 ### Additional A3: Tailored-Scene Comparison
@@ -196,7 +196,7 @@ The previous comparison evaluates A*, Dijkstra and RRT* on the same original map
 
 The additional script, [`taskA3_additional`](./TaskA3/taskA3_additional), imports the planner implementations from [`TaskA3_Compare_Modified.py`](./TaskA3/TaskA3_Compare_Modified.py). Both files are kept together in `TaskA3/`. Run the additional comparison from the repository root with `python TaskA3/taskA3_additional`.
 
-![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3/TaskA3_additional_result_graph1.png)
+![A*, Dijkstra and RRT* routes, with charts for elapsed time, shared route score and operating cost](./TaskA3/A3_additional_animation.gif)
 *Task A3 comparison on the the tailered map. The elapsed times shown are from the run captured in the figure.*
 
 The shared route score applies the fuel and time region surcharges to each returned route. The current shared scoring function does not include the jet-stream discount; A* does use that discount during its search.
