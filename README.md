@@ -278,7 +278,7 @@ python -m pip install "matplotlib>=3.10" numpy
 | A1 | [TaskA1_Final.py](./TaskA1/TaskA1_Final.py) | `python TaskA1/TaskA1_Final.py --no-show` |
 | A2 | [TaskA2_Final.py](./TaskA2/TaskA2_Final.py) | `python TaskA2/TaskA2_Final.py` |
 | A3 | [TaskA3_Compare_Modified.py](./TaskA3/TaskA3_Compare_Modified.py) | `python TaskA3/TaskA3_Compare_Modified.py` |
-| A3 | [TaskA3_Compare_Modified.py](./TaskA3/taskA3_additional) | `python TaskA3/TaskA3_additional` |
+| A3 | [TaskA3_additional.py](./TaskA3/taskA3_additional) | `python TaskA3/TaskA3_additional` |
 | A3 | [TaskA3_3D_compare.py](./TaskA3/cTaskA3/TaskA3_3D_compare.py) | `python TaskA3/TaskA3_3D_compare.py` |
 
 Task 2 shows the sweep table in the terminal and opens two plots. Close both plots to see the final aircraft cost breakdown. For the A3 comparison, wait for `Comparison complete` in the terminal, then close the figure to exit. To run the A3 planners individually, use `python TaskA3/TaskA3.1_Final.py` for Dijkstra or `python TaskA3/TaskA3.2_Final.py` for RRT*.
@@ -408,13 +408,13 @@ Overall, this project introduced me to factors that must be considered while mak
 </details>
 
 <details> <summary><strong>CHEN Lingxi</strong></summary>
-I mainly worked on Task 2 and Task A3, while also modifying some of the other tasks. I revised the PowerPoint slides to make the methods and results easier to follow.
+I mainly worked on Task 2 and Task A3, while also modifying some of the other tasks. 
 
 For Task 2, I helped implement and evaluate different jet-stream positions. We initially assumed that placing the jet stream at (y=5) was best. I changed the experiment to test all integer positions in the specified range. The lowest Scenario 1 cost was $80,931.24, with the jet stream starting at (y=10) and covering (y=10) to (y=15). Compared with the Task 1 baseline of $81,751.58, this represents a saving of $820.34, or about 0.719%.
 
-For Task A3, I implemented Dijkstra and RRT* and compared them with A* in two scenarios. In the original scenario, from (5, 40) to (20, 30), all three algorithms achieved a shortest distance of 58.7875 units. To make the comparison fair, I allowed RRT* to explore in continuous directions and then refined its route to use eight-direction movement.Some sources suggest that RRT* can perform well in high-dimensional or complex scenarios. To explore this, I also tested a tailored scene with a wall, a narrow passage between (2, 10) and (28, 10), and fuel, time, and jet-stream regions. In this scenario, RRT* achieved the shortest distance, 29.9698 units, followed by Dijkstra at 29.9784 and A* at 33.1260.
+For Task A3, I implemented Dijkstra and RRT* and compared them with A* in two scenarios. In the original scenario, from (5, 40) to (20, 30), all three algorithms achieved a shortest distance of 58.7875 units. To make the comparison fair, I allowed RRT* to explore in continuous directions and then refined its route to use eight-direction movement.Some sources suggest that RRT* can perform well in high-dimensional or complex scenarios. To explore this, I also tested a tailored complex 2D scene with a wall, a narrow passage between (2, 10) and (28, 10), and fuel, time, and jet-stream regions.  Also, I futher compared them in a tailered 3 dimensional scenario with obstacles, fuel area.
 
-These two tests helped me form a more balanced view of the algorithms. A* uses a heuristic to guide the search and can be efficient, but its performance depends on the heuristic and grid setup. Dijkstra finds the lowest-cost route on the grid, but may explore more nodes and take longer. RRT* uses random sampling to explore complex spaces, but its results depend on randomness and the iteration limit, so global optimality is not guaranteed. This taught me to test algorithms in different scenarios and account for differences in scoring methods and algorithm designs, rather than treating one run as a universal ranking.
+These 3 tests helped me form a more balanced view of the algorithms. A* uses a heuristic to guide the search and can be efficient, but may sacrifice optimality. Dijkstra may be better in potimilaty, but may explore more nodes and take longer. With the increase of scenario complexity, both RRT* 's advantage in optimality and disadvantage in runtime are futher illustrated. RRT*uses random sampling to explore complex spaces, but its final route needs to be smoothed. This taught me to test algorithms in different scenarios and account for differences in scoring methods and algorithm designs, rather than treating one run as a universal ranking.
 
 Overall, this group project gave me an opportunity to start coding with the help of AI and strengthened my teamwork skills.
 </details>
