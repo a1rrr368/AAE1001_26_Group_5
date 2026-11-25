@@ -222,6 +222,7 @@ In this run, RRT* finds the shortest way with a much longer time,while Dijkstra 
 ### A*, Dijkstra, and RRT*
 
 [TaskA3_Compare_Modified.py](./TaskA3/TaskA3_Compare_Modified.py) and [`taskA3_additional`](./TaskA3/taskA3_additional) only conpare the 3 algorithisms in 2D scenarios. To compare theim capability in higher dimension space, we designed this 3D comparison task:[TaskA3_3D_compare.py](./TaskA3/TaskA3_3D_compare.py) This task runs A*, Dijkstra and RRT* with the same map, its details are as follows:
+
 1.start **(1,1,1)** and goal **(18,18,18)**. 
 
 2.Obstacles.
@@ -277,6 +278,8 @@ python -m pip install "matplotlib>=3.10" numpy
 | A1 | [TaskA1_Final.py](./TaskA1/TaskA1_Final.py) | `python TaskA1/TaskA1_Final.py --no-show` |
 | A2 | [TaskA2_Final.py](./TaskA2/TaskA2_Final.py) | `python TaskA2/TaskA2_Final.py` |
 | A3 | [TaskA3_Compare_Modified.py](./TaskA3/TaskA3_Compare_Modified.py) | `python TaskA3/TaskA3_Compare_Modified.py` |
+| A3 | [TaskA3_Compare_Modified.py](./TaskA3/taskA3_additional) | `python TaskA3/TaskA3_additional` |
+| A3 | [TaskA3_3D_compare.py](./TaskA3/cTaskA3/TaskA3_3D_compare.py) | `python TaskA3/TaskA3_3D_compare.py` |
 
 Task 2 shows the sweep table in the terminal and opens two plots. Close both plots to see the final aircraft cost breakdown. For the A3 comparison, wait for `Comparison complete` in the terminal, then close the figure to exit. To run the A3 planners individually, use `python TaskA3/TaskA3.1_Final.py` for Dijkstra or `python TaskA3/TaskA3.2_Final.py` for RRT*.
 
