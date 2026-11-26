@@ -137,12 +137,12 @@ With the default `--seed 5`, the fuel checkpoint is **(7, 6)** and the time chec
 
 | Visit order | Total weighted travel time (min) |
 |---|---:|
-| Start -> Fuel -> Time -> Base | **148.2168** |
+| Start -> Fuel -> Time -> Base | **152.9646** |
 | Start -> Time -> Fuel -> Base | 178.0319 |
 
-The selected order visits Fuel first and Time second, reducing weighted time by **29.8151 minutes** relative to the other order. The script checks that both checkpoints are visited and that the base is not reached earlier. By default it saves `TaskA1/A1_results/A1_route.png` and `TaskA1/A1_results/A1_route.txt`; `--output` changes the output path.
+The selected order visits Fuel first and Time second, reducing weighted time by **25.07 minutes** relative to the other order. The script checks that both checkpoints are visited and that the base is not reached earlier. By default it saves `TaskA1/A1_results/A1_route.png` and `TaskA1/A1_results/A1_route.txt`; `--output` changes the output path.
 
-![Route from the start through fuel checkpoint (7, 6) and time checkpoint (59, 1) to the base](./TaskA1/Figure4_TaskA1.png)
+![Route from the start through fuel checkpoint (7, 6) and time checkpoint (59, 1) to the base](./TaskA1/A1_results/A1_route.png)
 
 *Task A1 with seed 5: fuel checkpoint first, then time checkpoint, for a total weighted time of 148.2168 minutes.*
 
