@@ -143,7 +143,7 @@ The selected order visits Fuel first and Time second, reducing weighted time by 
 
 ![Route from the start through fuel checkpoint (7, 6) and time checkpoint (59, 1) to the base](./TaskA1/A1_results/A1_route.png)
 
-*Task A1 with seed 5: fuel checkpoint first, then time checkpoint, for a total weighted time of 148.2168 minutes.*
+*Task A1 with seed 5: fuel checkpoint first, then time checkpoint, for a total weighted time of 152.9646 minutes.*
 
 ## Task A2
 
@@ -245,11 +245,11 @@ the results are as follows:
 
 | Algorithm | Elapsed time (s) | weighted path cost | Path length (map units) | 
 |---|---:|---:|---:|
-| A* | 0.085 | 30.56| 30.56| 
+| A* | 0.085 | 32.86| 32.86| 
 | Dijkstra | 0.376 | 32.86 | 32.86| 
-| RRT* (seed 10,000 iterations) | 7973 | 32.86 | 32.86 | 
+| RRT* (seed 10,000 iterations) | 7973 | 30.56 | 30.56 | 
 
-note:since the route did not pass the fuel area, so the costs are be in direct proportion to the length.
+note: since the route did not pass the fuel area, so the costs are be in direct proportion to the length.
 
 In the run shown, RRT* finds the shortest route of 30.56 units with an extremely long runtime of 7973s.Dijkstra and A* finds a longer route of 32.86 units in 0.376s and 0.085s.
 
