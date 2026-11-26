@@ -24,6 +24,7 @@ class AStarPlanner:
         self.min_x = self.min_y = 0
         self.max_x = self.max_y = 0
         self.obstacle_map = None
+        self.obstacle_points = ()
         self.x_width = self.y_width = 0
         self.motion = self.get_motion_model()
         self.calc_obstacle_map(ox, oy)
@@ -102,7 +103,7 @@ class AStarPlanner:
 
                 n_id = self.calc_grid_index(node)
 
-                if not self.verify_node(node):
+                if not self.verify_node(node) or not self.verify_motion(current, node):
                     continue
                 if n_id in closed_set:
                     continue
@@ -144,6 +145,27 @@ class AStarPlanner:
             return False
         return True
 
+    def verify_motion(self, start_node, end_node):
+        x1 = self.calc_grid_position(start_node.x, self.min_x)
+        y1 = self.calc_grid_position(start_node.y, self.min_y)
+        x2 = self.calc_grid_position(end_node.x, self.min_x)
+        y2 = self.calc_grid_position(end_node.y, self.min_y)
+        dx, dy = x2 - x1, y2 - y1
+        length_squared = dx * dx + dy * dy
+        radius_squared = self.rr * self.rr
+
+        for ox, oy in self.obstacle_points:
+            if (ox < min(x1, x2) - self.rr or ox > max(x1, x2) + self.rr or
+                    oy < min(y1, y2) - self.rr or oy > max(y1, y2) + self.rr):
+                continue
+            t = ((ox - x1) * dx + (oy - y1) * dy) / length_squared
+            t = max(0.0, min(1.0, t))
+            closest_x = x1 + t * dx
+            closest_y = y1 + t * dy
+            if (ox - closest_x) ** 2 + (oy - closest_y) ** 2 <= radius_squared:
+                return False
+        return True
+
     def calc_obstacle_map(self, ox, oy):
         self.min_x = round(min(ox))
         self.min_y = round(min(oy))
@@ -157,6 +179,7 @@ class AStarPlanner:
         self.obstacle_map = [[False] * self.y_width for _ in range(self.x_width)]
         # REVIEW CHANGE 2: Reuse obstacle pairs; retain order and exact collision math.
         obstacle_points = tuple(zip(ox, oy))
+        self.obstacle_points = obstacle_points
         for ix in range(self.x_width):
             x = self.calc_grid_position(ix, self.min_x)
             for iy in range(self.y_width):
