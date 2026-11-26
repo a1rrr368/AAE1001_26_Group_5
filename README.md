@@ -98,10 +98,6 @@ Running the script opens two figures: Scenario 1 cost by lower boundary and the 
 
 *Task 2 route at the first minimum-cost placement in the sweep.*
 
-![Scenario 1 cost by jet-stream placement](./Task2/Task2result_graph2.png)
-
-*Scenario 1 minimum operating cost across the tested jet-stream placements.*
-
 ## Task 3
 
 ### New Aircraft Design
