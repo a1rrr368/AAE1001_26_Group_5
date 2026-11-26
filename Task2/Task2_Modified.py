@@ -4,14 +4,18 @@ Full fixed version (Matplotlib 3.10+ compatible) with Jet Stream integration
 """
 
 import math
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import warnings
 from matplotlib import MatplotlibDeprecationWarning
+from matplotlib.animation import FuncAnimation, PillowWriter
+from matplotlib.patches import Rectangle
 
 # REVIEW NOTE: Suppress Matplotlib deprecation warnings only; runtime errors remain visible.
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 
-show_animation = True   # False skips plotting, but still computes the route and all costs.
+show_animation = True   # False skips interactive plots; the GIF is still saved.
 
 # ============================================================
 # Task 2: Jet Stream Parameters (You can change JET_STREAM_Y_MIN here)
@@ -230,15 +234,88 @@ def sweep_jet_stream(planner, sx, sy, gx, gy, y_values=range(-10, 56)):
     results = []
     for y0 in y_values:
         JET_STREAM_Y_MIN = float(y0)
-        _, _, trip_time = planner.planning(
+        rx, ry, trip_time = planner.planning(
             sx, sy, gx, gy, animate=False, print_result=False)
         cost = s1_cost(trip_time) if trip_time is not None else float("inf")
         results.append({
             "y_lo": y0,
             "t_best": trip_time,
             "s1_cost": cost,
+            "rx": rx,
+            "ry": ry,
         })
     return results
+
+
+def save_jet_stream_animation(rows, obstacles, fc_x, fc_y, tc_x, tc_y,
+                              start, goal):
+    """Save a two-panel GIF of the route and cost as the jet stream moves."""
+    valid_rows = [row for row in rows if row["t_best"] is not None]
+    if not valid_rows:
+        raise ValueError("Cannot animate jet-stream positions without a valid route")
+
+    fig, (map_ax, cost_ax) = plt.subplots(
+        1, 2, figsize=(15, 7), gridspec_kw={"width_ratios": [1.15, 1]})
+
+    map_ax.add_patch(Rectangle(
+        (-10, valid_rows[0]["y_lo"]), 70, JET_STREAM_HEIGHT,
+        facecolor="#55aaff", edgecolor="#1677b8", alpha=0.2,
+        label="Jet stream (-5%)"))
+    map_ax.plot(*obstacles, ".k", markersize=2, label="Obstacles")
+    map_ax.plot(fc_x, fc_y, "oy", markersize=3, alpha=0.35,
+                label="Fuel area (+15%)")
+    map_ax.plot(tc_x, tc_y, "or", markersize=3, alpha=0.35,
+                label="Time area (+30%)")
+    map_ax.plot(*start, "b*", markersize=14, label="Start")
+    map_ax.plot(*goal, "g*", markersize=14, label="Goal")
+    route_line, = map_ax.plot([], [], color="#d62728", linewidth=2.2,
+                              label="Best route")
+    map_ax.set(xlim=(-12, 72), ylim=(-12, 62), xlabel="X", ylabel="Y")
+    map_ax.set_aspect("equal")
+    map_ax.grid(True, alpha=0.25)
+    map_ax.legend(loc="upper right", fontsize=8)
+    band = map_ax.patches[0]
+
+    y_values = [row["y_lo"] for row in valid_rows]
+    costs = [row["s1_cost"] for row in valid_rows]
+    cost_ax.plot(y_values, costs, "-o", markersize=3,
+                 color="#4169a1", label="Scenario 1 cost")
+    best_cost = min(costs)
+    best_rows = [row for row in valid_rows if row["s1_cost"] == best_cost]
+    cost_ax.scatter(
+        [row["y_lo"] for row in best_rows],
+        [row["s1_cost"] for row in best_rows],
+        color="#2a9d55", marker="*", s=100, label="Minimum cost", zorder=4)
+    moving_point, = cost_ax.plot([], [], "o", color="#e53935",
+                                 markersize=9, label="Current position", zorder=5)
+    guide = cost_ax.axvline(y_values[0], color="#e53935",
+                            linestyle="--", alpha=0.55)
+    cost_ax.set(xlim=(min(y_values), max(y_values)),
+                xlabel="Jet-stream lower boundary y",
+                ylabel="Scenario 1 total cost ($)",
+                title="Cost by jet-stream position")
+    cost_ax.grid(True, alpha=0.3)
+    cost_ax.legend(loc="best")
+
+    def update(frame):
+        row = valid_rows[frame]
+        y_lo = row["y_lo"]
+        band.set_y(y_lo)
+        route_line.set_data(row["rx"], row["ry"])
+        moving_point.set_data([y_lo], [row["s1_cost"]])
+        guide.set_xdata([y_lo, y_lo])
+        map_ax.set_title(
+            f"Jet stream y=[{y_lo}, {y_lo + JET_STREAM_HEIGHT:g}]"
+            f" | Route time: {row['t_best']:.4f} min")
+        return band, route_line, moving_point, guide
+
+    animation = FuncAnimation(
+        fig, update, frames=len(valid_rows), interval=200, blit=False,
+        repeat=True)
+    output = Path(__file__).resolve().parent / "Task2_jet_stream.gif"
+    animation.save(output, writer=PillowWriter(fps=5))
+    plt.close(fig)
+    return output
 
 
 def main():
@@ -304,6 +381,9 @@ def main():
     # ---------- Sweep jet-stream placement and choose minimum Scenario 1 cost ----------
     a_star = AStarPlanner(ox, oy, grid_size, robot_radius, fc_x, fc_y, tc_x, tc_y)
     rows = sweep_jet_stream(a_star, sx, sy, gx, gy)
+    gif_output = save_jet_stream_animation(
+        rows, (ox, oy), fc_x, fc_y, tc_x, tc_y, (sx, sy), (gx, gy))
+    print(f"Jet-stream animation GIF: {gif_output}")
     best = min(rows, key=lambda row: row["s1_cost"])
     best_cost = best["s1_cost"]
     best_rows = [row for row in rows if row["s1_cost"] == best_cost]
@@ -446,4 +526,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
