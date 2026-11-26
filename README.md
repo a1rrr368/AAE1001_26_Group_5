@@ -89,6 +89,9 @@ The calculation uses `N = ceil(passengers / capacity)` and `total_cost = N * (fu
 
 The integer lower boundaries from **10 through 20** tie for the lowest cost found. The script uses the first tied placement, `y = 10`, for the route plot. It saves approximately **$820.34 (1.00%)** relative to the no-jet-stream baseline. The sweep covers the integer placements in the script. Since A* still uses an unscaled distance heuristic with discounted moves, these results describe the best route and placement the implementation found.
 
+the searching process are as follows:
+![Task 2 searching process](./Task2/Task2_jet_stream.gif)
+
 Running the script opens two figures: Scenario 1 cost by lower boundary and the route for the selected band.
 
 ![Task 2 route with the selected jet-stream band from y = 10 to y = 15](./Task2/Figure3_Task2.png)
